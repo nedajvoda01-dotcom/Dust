@@ -1,0 +1,103 @@
+{
+  "_comment": "BARYCENTER — Default parameter ranges. Values are starting points, not final physics. All systems read from this file; no magic numbers in code.",
+
+  "planet": {
+    "radius_units": 1000,
+    "_comment_radius": "Simulation units. 1 unit ≈ 1 metre equivalent at character scale.",
+    "gravity": 9.2
+  },
+
+  "day": {
+    "length_minutes": 90,
+    "_comment": "Real-time minutes per full planet rotation. Range: 60–120."
+  },
+
+  "binary": {
+    "period_minutes": 18,
+    "_comment": "Real-time minutes for secondary sun to complete one orbit relative to primary. Range: 10–30.",
+    "primary_luminosity": 1.0,
+    "secondary_luminosity": 0.35,
+    "secondary_color_temp_kelvin": 8500,
+    "_comment_color": "Primary is warm (K/G-type ~5000K implied), secondary is hotter/bluer."
+  },
+
+  "ring": {
+    "inner_radius_mul": 1.4,
+    "_comment_inner": "Multiplier on planet_radius_units.",
+    "outer_radius_mul": 2.1,
+    "tilt_deg": 14.0,
+    "_comment_tilt": "Ring plane tilt relative to equatorial plane, degrees."
+  },
+
+  "moon": {
+    "orbit_radius_mul": 3.5,
+    "_comment_orbit": "Multiplier on planet_radius_units.",
+    "period_minutes": 45,
+    "radius_mul": 0.08,
+    "_comment_radius_mul": "Moon radius as fraction of planet radius."
+  },
+
+  "atmosphere": {
+    "dust_base": 0.12,
+    "_comment_dust": "Baseline dust suspension (0–1). Storms push this higher.",
+    "haze_density": 0.55,
+    "_comment_haze": "Atmospheric scattering density (0–1). Controls depth-layer separation.",
+    "scattering_color": [0.72, 0.58, 0.45],
+    "_comment_scatter": "RGB, normalised. Warm dusty atmosphere tint."
+  },
+
+  "pixel": {
+    "downscale_factor": 4,
+    "_comment": "Integer only. Frame rendered at 1/N resolution then upscaled. Range: 3–6.",
+    "dither_strength": 0.6,
+    "_comment_dither": "0 = no dither, 1 = full Bayer matrix amplitude.",
+    "palette_levels": 32,
+    "_comment_palette": "Effective colour levels per channel after quantisation. Not a hard 8-bit lock."
+  },
+
+  "lighting": {
+    "light_bands": 4,
+    "_comment": "Discrete surface shading bands. 0 = smooth, 1–5 = stepped. Range: 0–5.",
+    "sun_max_elevation_deg": 35,
+    "_comment_elev": "Primary sun elevation cap for default composition state.",
+    "shadow_color": [0.22, 0.25, 0.38],
+    "key_color": [1.0, 0.78, 0.42]
+  },
+
+  "climate": {
+    "wind_base": 4.5,
+    "_comment": "Base wind speed in simulation units/s at sea level.",
+    "wind_gust_multiplier": 3.2,
+    "storm_threshold_pressure_delta": 0.25,
+    "_comment_storm": "Pressure differential (normalised 0–1) above which storm onset begins.",
+    "thermal_mass": 0.8,
+    "_comment_thermal": "Climate field inertia. Higher = slower response to Insolation changes."
+  },
+
+  "geo": {
+    "event_rate_scree_per_hour": 12,
+    "_comment_scree": "Expected scree events per real-time hour across the whole planet.",
+    "event_rate_landslide_per_hour": 2,
+    "event_rate_collapse_per_hour": 0.3,
+    "event_rate_rift_per_hour": 0.05,
+    "_comment_rift": "Rifts are rare. One every ~20 real-time hours expected globally.",
+    "slope_instability_threshold": 0.72,
+    "stress_threshold": 0.85,
+    "void_risk_threshold": 0.68
+  },
+
+  "character": {
+    "walk_speed_units_per_s": 1.8,
+    "slide_friction_threshold": 0.15,
+    "_comment_friction": "Surface friction below this value triggers slide state.",
+    "wind_stumble_threshold": 12.0,
+    "_comment_wind": "Wind speed above which crouch_reflex state activates.",
+    "quake_brace_threshold": 0.4,
+    "_comment_quake": "Quake impulse magnitude (normalised) above which brace state activates."
+  },
+
+  "seed": {
+    "default": 42,
+    "_comment": "Default world seed. Any integer is valid. Determines all procedural generation."
+  }
+}
