@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dust — shared world</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%;
+      background: #0a0805;
+      color: #c8a86a;
+      font-family: monospace;
+      font-size: 13px;
+      overflow: hidden;
+    }
+    #canvas {
+      display: block;
+      width: 100%; height: 100%;
+    }
+    #hud {
+      position: fixed;
+      top: 12px; left: 12px;
+      line-height: 1.6;
+      pointer-events: none;
+      text-shadow: 0 0 4px #000;
+    }
+    #status {
+      position: fixed;
+      bottom: 12px; right: 12px;
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    .disconnected { color: #e05050; }
+    .connecting   { color: #e0c050; }
+    .connected    { color: #70c870; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <div id="hud">
+    <div id="hud-world">world: —</div>
+    <div id="hud-pos">pos: —</div>
+    <div id="hud-time">time: —</div>
+    <div id="hud-dust">dust: —</div>
+    <div id="hud-players">players: 0</div>
+  </div>
+  <div id="status" class="connecting">connecting…</div>
+
+  <script>
+  "use strict";
+
+  // ─── Canvas / renderer ────────────────────────────────────────────────
+  const canvas = document.getElementById("canvas");
+  const ctx    = canvas.getContext("2d");
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  // ─── World state ──────────────────────────────────────────────────────
+  const world = {
+    seed:      null,
+    worldId:   null,
+    simTime:   0,
+    timeScale: 1,
+    epoch:     0,
+    spawnPos:  null,
+    anchor:    null,
+    storms:    [],
+    globalDust: 0,
+  };
+
+  // Local player
+  const player = {
+    id:    null,
+    pos:   [0, 1001.8, 0],
+    vel:   [0, 0, 0],
+    flags: 0,
+  };
+
+  // Remote players  id → { pos, vel, flags, lastSeen }
+  const remotePlayers = new Map();
+
+  // Geo events list (last 200)
+  const geoEvents = [];
+
+  // ─── WebSocket ────────────────────────────────────────────────────────
+  const WS_PATH = `ws://${location.host}/ws`;
+  let ws = null;
+  let reconnectTimer = null;
+  let sendInterval   = null;
+
+  const statusEl = document.getElementById("status");
+
+  function setStatus(cls, text) {
+    statusEl.className = cls;
+    statusEl.textContent = text;
+  }
+
+  function connect() {
+    clearTimeout(reconnectTimer);
+    setStatus("connecting", "connecting…");
+    ws = new WebSocket(WS_PATH);
+
+    ws.onopen = () => {
+      setStatus("connected", "connected");
+      ws.send(JSON.stringify({ type: "JOIN", userAgent: navigator.userAgent }));
+      // Send player state at 20 Hz
+      clearInterval(sendInterval);
+      sendInterval = setInterval(sendPlayerState, 50);
+    };
+
+    ws.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data);
+        handleMessage(msg);
+      } catch (e) { /* ignore */ }
+    };
+
+    ws.onclose = () => {
+      setStatus("disconnected", "disconnected — reconnecting…");
+      clearInterval(sendInterval);
+      reconnectTimer = setTimeout(connect, 2000);
+    };
+
+    ws.onerror = () => {
+      ws.close();
+    };
+  }
+
+  function sendPlayerState() {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    ws.send(JSON.stringify({
+      type:  "PLAYER_STATE",
+      pos:   player.pos,
+      vel:   player.vel,
+      flags: player.flags,
+    }));
+  }
+
+  // ─── Message handlers ─────────────────────────────────────────────────
+  function handleMessage(msg) {
+    switch (msg.type) {
+
+      case "WORLD_SYNC":
+        world.seed      = msg.seed;
+        world.worldId   = msg.worldId;
+        world.simTime   = msg.simTime;
+        world.timeScale = msg.timeScale;
+        world.spawnPos  = msg.spawnPos;
+        world.anchor    = msg.anchor;
+        if (msg.geoEvents) {
+          geoEvents.push(...msg.geoEvents);
+          if (geoEvents.length > 200) geoEvents.splice(0, geoEvents.length - 200);
+        }
+        // Place local player at assigned spawn
+        if (msg.spawnPos) player.pos = msg.spawnPos.slice();
+        break;
+
+      case "WORLD_TICK":
+        // Smooth simTime toward server value
+        const delta = msg.simTime - world.simTime;
+        world.simTime   += delta * 0.1;   // soft correction
+        world.timeScale  = msg.timeScale;
+        world.epoch      = msg.epoch;
+        break;
+
+      case "PLAYERS":
+        const now = performance.now();
+        const seen = new Set();
+        for (const p of msg.players) {
+          seen.add(p.id);
+          if (p.id === player.id) continue;  // skip self
+          const prev = remotePlayers.get(p.id);
+          if (prev) {
+            // Interpolation buffer: store two snapshots
+            prev.prev = { pos: prev.pos.slice(), t: prev.lastSeen };
+            prev.pos      = p.pos;
+            prev.vel      = p.vel;
+            prev.flags    = p.flags;
+            prev.lastSeen = now;
+          } else {
+            remotePlayers.set(p.id, {
+              pos: p.pos, vel: p.vel, flags: p.flags, lastSeen: now,
+              prev: null,
+            });
+          }
+        }
+        // Remove players not in the snapshot
+        for (const id of remotePlayers.keys()) {
+          if (!seen.has(id)) remotePlayers.delete(id);
+        }
+        break;
+
+      case "GEO_EVENT":
+        geoEvents.push(msg);
+        if (geoEvents.length > 200) geoEvents.shift();
+        break;
+
+      case "CLIMATE_SNAP":
+        world.storms     = msg.storms  || [];
+        world.globalDust = msg.globalDust != null ? msg.globalDust : world.globalDust;
+        break;
+    }
+  }
+
+  // ─── Simple input (WASD / arrow keys) ────────────────────────────────
+  const keys = {};
+  window.addEventListener("keydown", e => { keys[e.code] = true;  });
+  window.addEventListener("keyup",   e => { keys[e.code] = false; });
+
+  // Walk speed (units/s): mirrors char.walk_speed_units_per_s on the server.
+  // TODO: receive authoritative value from WORLD_SYNC once server exposes it.
+  const WALK_SPEED = 1.8;
+
+  function updatePlayer(dt) {
+    if (!world.spawnPos) return;
+
+    // Compute surface tangent axes from current position
+    const [px, py, pz] = player.pos;
+    const pr = Math.sqrt(px*px + py*py + pz*pz);
+    if (pr < 1e-9) return;
+
+    const ux = px/pr, uy = py/pr, uz = pz/pr;   // up = radial
+
+    // Forward in xz plane projected onto tangent plane
+    let fx = -uz, fy = 0, fz = ux;
+    const fl = Math.sqrt(fx*fx + fz*fz);
+    if (fl > 1e-9) { fx /= fl; fz /= fl; }
+
+    // Right = up × forward
+    const rx = uy*fz - uz*fy, ry = uz*fx - ux*fz, rz = ux*fy - uy*fx;
+
+    let dx = 0, dz = 0;
+    if (keys["KeyW"] || keys["ArrowUp"])    { dx += fx; dz += fz; }
+    if (keys["KeyS"] || keys["ArrowDown"])  { dx -= fx; dz -= fz; }
+    if (keys["KeyA"] || keys["ArrowLeft"])  { dx -= rx; dz -= rz; }
+    if (keys["KeyD"] || keys["ArrowRight"]) { dx += rx; dz += rz; }
+
+    const dl = Math.sqrt(dx*dx + dz*dz);
+    if (dl > 1e-9) {
+      dx /= dl; dz /= dl;
+      // Arc step on sphere surface
+      const arc = WALK_SPEED * dt / pr;
+      // New unit direction
+      let nx = ux + arc * dx;
+      let ny = uy;
+      let nz = uz + arc * dz;
+      const nl = Math.sqrt(nx*nx + ny*ny + nz*nz);
+      nx /= nl; ny /= nl; nz /= nl;
+      player.pos = [nx * pr, ny * pr, nz * pr];
+      player.vel = [dx * WALK_SPEED, 0, dz * WALK_SPEED];
+    } else {
+      player.vel = [0, 0, 0];
+    }
+  }
+
+  // ─── Minimal 2-D overhead renderer ───────────────────────────────────
+  // Projects sphere surface positions onto the canvas using an azimuthal
+  // equidistant projection centred on the local player.
+
+  function project(pos) {
+    if (!pos) return null;
+    const [px, py, pz] = player.pos;
+    const [tx, ty, tz] = pos;
+    const pr = Math.sqrt(px*px + py*py + pz*pz);
+    if (pr < 1e-9) return null;
+
+    const ux = px/pr, uy = py/pr, uz = pz/pr;
+
+    // Angular distance between player and target
+    const tr = Math.sqrt(tx*tx + ty*ty + tz*tz);
+    if (tr < 1e-9) return null;
+    const dot = (tx*ux + ty*uy + tz*uz) / tr;
+    const angDist = Math.acos(Math.max(-1, Math.min(1, dot)));
+
+    if (angDist > Math.PI / 2) return null;  // behind
+
+    // Tangent direction from player toward target
+    let dx = tx/tr - dot*ux;
+    let dy = ty/tr - dot*uy;
+    let dz = tz/tr - dot*uz;
+    const dl = Math.sqrt(dx*dx + dy*dy + dz*dz);
+    if (dl < 1e-9) return { x: canvas.width/2, y: canvas.height/2 };
+    dx /= dl; dy /= dl; dz /= dl;
+
+    // Map to canvas: build 2-D axes from first remote player or defaults
+    const rightX = dy * uz - dz * uy;
+    const rightZ = dz * ux - dx * uz;
+    const fwdX   = dx;
+    const fwdZ   = dz;
+
+    const SCALE = Math.min(canvas.width, canvas.height) * 0.35 / (Math.PI / 2);
+    const cx = canvas.width  / 2;
+    const cy = canvas.height / 2;
+
+    // Simple 2-D: use xz plane of tangent direction for screen axes
+    return {
+      x: cx + (tx/tr - ux) * pr * SCALE * 0.01,
+      y: cy - (tz/tr - uz) * pr * SCALE * 0.01,
+    };
+  }
+
+  function draw() {
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    // Background gradient (dust tint)
+    const dustAlpha = Math.min(1, world.globalDust * 2);
+    ctx.fillStyle = `rgba(40,22,8,${0.85 + dustAlpha * 0.1})`;
+    ctx.fillRect(0, 0, W, H);
+
+    // Storm circles (if any)
+    for (const storm of world.storms) {
+      const cx2 = W / 2 + storm.lon * 60;
+      const cy2 = H / 2 - storm.lat * 60;
+      const r2  = storm.radius * 200;
+      const grd = ctx.createRadialGradient(cx2, cy2, 0, cx2, cy2, r2);
+      grd.addColorStop(0, `rgba(180,100,20,${storm.intensity * 0.3})`);
+      grd.addColorStop(1, "rgba(180,100,20,0)");
+      ctx.beginPath();
+      ctx.arc(cx2, cy2, r2, 0, Math.PI * 2);
+      ctx.fillStyle = grd;
+      ctx.fill();
+    }
+
+    const cx = W / 2, cy = H / 2;
+
+    // Remote players
+    for (const [id, rp] of remotePlayers) {
+      ctx.beginPath();
+      ctx.arc(cx + (rp.pos[0] - player.pos[0]) * 5,
+              cy - (rp.pos[2] - player.pos[2]) * 5, 6, 0, Math.PI * 2);
+      ctx.fillStyle   = "#e05050";
+      ctx.fill();
+      ctx.strokeStyle = "#ff8080";
+      ctx.lineWidth   = 1;
+      ctx.stroke();
+    }
+
+    // Local player (centre)
+    ctx.beginPath();
+    ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+    ctx.fillStyle   = "#f0c040";
+    ctx.fill();
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth   = 2;
+    ctx.stroke();
+
+    // Geo event markers (recent 20)
+    const recentGeo = geoEvents.slice(-20);
+    for (const ev of recentGeo) {
+      if (!ev.pos) continue;
+      const sx = cx + (ev.pos[0] - player.pos[0]) * 5;
+      const sy = cy - (ev.pos[2] - player.pos[2]) * 5;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 4, 0, Math.PI * 2);
+      ctx.fillStyle = "#e08020";
+      ctx.fill();
+    }
+
+    // HUD
+    const [px, , pz] = player.pos;
+    document.getElementById("hud-world").textContent =
+      `world: ${world.worldId ? world.worldId.slice(0,8) : "—"}  seed: ${world.seed ?? "—"}`;
+    document.getElementById("hud-pos").textContent =
+      `pos: (${px.toFixed(1)}, ${pz.toFixed(1)})`;
+    document.getElementById("hud-time").textContent =
+      `simTime: ${world.simTime.toFixed(1)}s  ×${world.timeScale}`;
+    document.getElementById("hud-dust").textContent =
+      `dust: ${(world.globalDust * 100).toFixed(1)}%` +
+      (world.storms.length ? `  storms: ${world.storms.length}` : "");
+    document.getElementById("hud-players").textContent =
+      `players: ${remotePlayers.size + 1}`;
+  }
+
+  // ─── Main loop ────────────────────────────────────────────────────────
+  let lastFrame = performance.now();
+
+  function loop(now) {
+    const dt = Math.min((now - lastFrame) / 1000, 0.1);
+    lastFrame = now;
+
+    updatePlayer(dt);
+    // Advance local simTime
+    world.simTime += dt * world.timeScale;
+    draw();
+
+    requestAnimationFrame(loop);
+  }
+
+  // ─── Boot ─────────────────────────────────────────────────────────────
+  connect();
+  requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

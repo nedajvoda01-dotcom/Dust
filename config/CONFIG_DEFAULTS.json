@@ -623,5 +623,28 @@
   "dev": {
     "headless_mode": false,
     "_comment_headless": "When true, disables all rendering and audio (for CI / smoke tests)."
+  },
+
+  "net": {
+    "_comment": "Stage 21 — multiplayer networking layer.",
+    "enabled": false,
+    "_comment_enabled": "Set true to start the WebSocket server on launch.",
+    "ws_port": 8765,
+    "_comment_port": "WebSocket (and HTTP) listen port.",
+    "tick_hz_world": 5,
+    "_comment_tick_world": "WORLD_TICK broadcast rate (Hz).",
+    "tick_hz_players": 20,
+    "_comment_tick_players": "PLAYERS broadcast rate (Hz). Range: 10–20.",
+    "snapshot_interval_sec": 30,
+    "_comment_snap": "Seconds between full CLIMATE_SNAP broadcasts.",
+    "spawn_radius_m": 5.0,
+    "_comment_spawn_r": "Scatter radius (m) around the shared spawn anchor.",
+    "interest_sector_deg": 5.0,
+    "_comment_interest": "Angular sector (degrees) for interest-management filtering."
+  },
+
+  "world": {
+    "reset_on_missing_state": true,
+    "_comment": "When true, a missing world_state/ creates a fresh world on next start."
   }
 }
