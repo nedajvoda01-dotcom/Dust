@@ -195,7 +195,9 @@ class OpsLayer:
         self._maybe_rotate_log()
 
     def _maybe_rotate_log(self) -> None:
-        if self._log_path is None or not self._log_path.exists():
+        if self._log_path is None or self._log_file is None:
+            return
+        if not self._log_path.exists():
             return
         try:
             size_mb = self._log_path.stat().st_size / (1024 * 1024)
@@ -229,7 +231,12 @@ class OpsLayer:
     def _prune_log_files(self) -> None:
         """Delete oldest rotated log files beyond the keep limit."""
         rotated = sorted(self._log_dir.glob("server.log.*.jsonl.gz"))
-        excess  = rotated[: max(0, len(rotated) - self._log_keep_files)]
+        self._prune_file_list(rotated, self._log_keep_files)
+
+    @staticmethod
+    def _prune_file_list(files: list, keep: int) -> None:
+        """Delete the oldest items from *files* so at most *keep* remain."""
+        excess = files[: max(0, len(files) - keep)]
         for f in excess:
             try:
                 f.unlink()
@@ -460,12 +467,7 @@ class OpsLayer:
                 pass
 
         deltas = sorted(self._state_dir.glob(f"{_DELTA_PREFIX}*.jsonl"))
-        excess = deltas[: max(0, len(deltas) - self._log_keep_files)]
-        for f in excess:
-            try:
-                f.unlink()
-            except OSError:
-                pass
+        self._prune_file_list(deltas, self._log_keep_files)
 
     # ==========================================================================
     # Soft reset
@@ -515,14 +517,17 @@ class OpsLayer:
         # 1. Final baseline (best-effort)
         self.compact()
 
-        # 2. Archive old world state (best-effort, with timeout guard)
+        # 2. Archive old world state (best-effort; done in a thread to avoid
+        #    blocking the event loop for large world states)
         ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
         archive_root = self._state_dir.parent / _ARCHIVE_DIR
         archive_root.mkdir(parents=True, exist_ok=True)
         dest = archive_root / f"world_{old_id}_{ts}"
         try:
             if self._state_dir.exists():
-                shutil.copytree(str(self._state_dir), str(dest))
+                src_str  = str(self._state_dir)
+                dest_str = str(dest)
+                await asyncio.to_thread(shutil.copytree, src_str, dest_str)
         except Exception as exc:
             self.log(CAT_OPS,
                      f"Archive skipped (non-fatal): {exc}", level="WARN")

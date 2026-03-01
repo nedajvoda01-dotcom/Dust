@@ -473,16 +473,15 @@ class NetworkServer:
 
         # Stage 24 — POST /ops/reset (localhost-only soft world reset)
         if clean_path == "/ops/reset":
-            remote_ip = "unknown"
+            remote_ip = ""
             try:
                 remote_ip = (request_headers.get("X-Forwarded-For") or
                              request_headers.get("x-forwarded-for") or "")
             except Exception:
                 pass
-            # Only allow from loopback; the actual remote address check is
-            # done at the websockets layer — we only use header as a secondary
-            # guard and always permit when the header is absent/local.
-            if remote_ip and not remote_ip.startswith(("127.", "::1", "")):
+            # Only allow when no forwarding header is present (direct loopback)
+            # or the header explicitly starts with a loopback address.
+            if remote_ip and not remote_ip.startswith(("127.", "::1")):
                 return self._make_response(
                     403, [], b"Forbidden: ops endpoints are localhost-only",
                     request_headers,
