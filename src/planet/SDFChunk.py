@@ -78,6 +78,9 @@ class SDFChunk:
     positions:      List[tuple]              # len = resolution³, each (x,y,z)
     distance_field: List[float]              # len = resolution³
     material_field: List[int]                # len = resolution³
+    hardness_field: List[float]              # len = resolution³  (0..1)
+    fracture_field: List[float]              # len = resolution³  (0..1)
+    porosity_field: List[float]              # len = resolution³  (0..1)
     mesh_handle:    Optional[Mesh] = field(default=None, compare=False)
     dirty:          bool           = True
 

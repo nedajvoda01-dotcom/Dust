@@ -5,13 +5,16 @@ Produces Martian-style relief:
   * craters (small/medium/large with age-based erosion)
   * fault-line canyons
   * soft terracing
+  * tectonic influence (ridges, rifts, transform canyons) when a
+    TectonicPlatesSystem is supplied
 
-No external dependencies; all noise is hash-based value noise.
+No external dependencies for the base layer; tectonic module is optional.
 """
 from __future__ import annotations
 
 import math
 import random
+from typing import Optional
 
 from src.math.Vec3 import Vec3
 
@@ -163,10 +166,15 @@ class PlanetHeightProvider:
 
     ``sample_height(unit_dir)`` and ``sample_normal_approx(unit_dir)`` are
     stable for a given seed across runs (no external state).
+
+    Optional *tectonic_system* (TectonicPlatesSystem) adds geological
+    structure: mountain ridges along convergent boundaries, rift valleys
+    along divergent boundaries, and canyons along transform boundaries.
     """
 
-    def __init__(self, seed: int) -> None:
+    def __init__(self, seed: int, tectonic_system=None) -> None:
         self._seed: int = seed
+        self._tectonic = tectonic_system
 
         # Noise-domain offset isolates seeds from each other.
         # XOR with a decorrelated constant so different seeds produce
@@ -237,10 +245,58 @@ class PlanetHeightProvider:
                 f_total -= fdepth * max(0.0, 1.0 - t * 0.85) * (1.0 - 0.25 * t)
         h += max(-0.7, min(0.0, f_total * 0.28))
 
-        # 5. Soft terrace
+        # 5. Tectonic influence (optional)
+        if self._tectonic is not None:
+            h += self._tectonic_height(unit_dir, dx, dy, dz)
+
+        # 6. Soft terrace
         h = _terrace(h, _TERRACE_STEP)
 
         return h * HEIGHT_SCALE
+
+    # ------------------------------------------------------------------
+    # Tectonic height contribution
+    # ------------------------------------------------------------------
+
+    # Maximum amplitude of tectonic modification (fraction of HEIGHT_SCALE)
+    _TECTONIC_RIDGE_AMP:   float = 0.55   # convergent → positive ridge
+    _TECTONIC_RIFT_AMP:    float = 0.40   # divergent  → negative valley
+    _TECTONIC_CANYON_AMP:  float = 0.30   # transform  → negative canyon
+
+    def _tectonic_height(self, unit_dir: Vec3, dx: float, dy: float, dz: float) -> float:
+        """
+        Return additional height offset ∈ approx [-0.55, 0.55] from the
+        tectonic system at *unit_dir*.
+
+        Applied *before* terracing so tectonic forms participate in
+        terracing for a more geological look.
+        """
+        from src.planet.TectonicPlatesSystem import BoundaryType
+
+        btype, bstrength = self._tectonic.sample_boundary(unit_dir)
+        if btype == BoundaryType.NONE or bstrength < 1e-4:
+            return 0.0
+
+        ox, oy, oz = self._ox, self._oy, self._oz
+
+        if btype == BoundaryType.CONVERGENT:
+            # Ridge: proportional to boundary strength, plus low-freq noise variation
+            n_ridge = _value_noise3(
+                dx * 1.2 + ox * 0.3,
+                dy * 1.2 + oy * 0.3,
+                dz * 1.2 + oz * 0.3,
+            ) * 0.25
+            return (bstrength + n_ridge * bstrength) * self._TECTONIC_RIDGE_AMP
+
+        if btype == BoundaryType.DIVERGENT:
+            # Rift valley: negative, proportional to boundary strength
+            return -bstrength * self._TECTONIC_RIFT_AMP
+
+        if btype == BoundaryType.TRANSFORM:
+            # Narrow canyon: negative, proportional to boundary strength
+            return -bstrength * self._TECTONIC_CANYON_AMP
+
+        return 0.0
 
     # ------------------------------------------------------------------
     def sample_normal_approx(self, unit_dir: Vec3, eps: float = 2e-3) -> Vec3:
