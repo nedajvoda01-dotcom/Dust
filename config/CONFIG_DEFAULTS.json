@@ -1,17 +1,14 @@
 {
   "_comment": "BARYCENTER — Default parameter ranges. Values are starting points, not final physics. All systems read from this file; no magic numbers in code.",
-
   "planet": {
     "radius_units": 1000,
     "_comment_radius": "Simulation units. 1 unit ≈ 1 metre equivalent at character scale.",
     "gravity": 9.2
   },
-
   "day": {
     "length_minutes": 90,
     "_comment": "Real-time minutes per full planet rotation. Range: 60–120."
   },
-
   "binary": {
     "period_minutes": 18,
     "_comment": "Real-time minutes for secondary sun to complete one orbit relative to primary. Range: 10–30.",
@@ -24,28 +21,24 @@
     "mass_ratio": 0.35,
     "_comment_mass_ratio": "M2/M1 mass ratio. Determines barycenter split."
   },
-
   "sun1": {
     "intensity": 1.0,
     "_comment": "Primary sun luminosity multiplier.",
     "angular_radius_deg": 1.0,
     "_comment_ang": "Apparent angular radius of primary sun disc (degrees)."
   },
-
   "sun2": {
     "intensity": 0.35,
     "_comment": "Secondary sun luminosity multiplier.",
     "angular_radius_deg": 0.7,
     "_comment_ang": "Apparent angular radius of secondary sun disc (degrees)."
   },
-
   "astro": {
     "time_scale": 1.0,
     "_comment": "Global time multiplier for AstroSystem (dev: increase to speed up cycles).",
     "orbit_separation_mul": 5.0,
     "_comment_sep": "Binary separation as a multiple of planet_radius_units."
   },
-
   "ring": {
     "inner_radius_mul": 1.4,
     "_comment_inner": "Multiplier on planet_radius_units.",
@@ -53,7 +46,6 @@
     "tilt_deg": 14.0,
     "_comment_tilt": "Ring plane tilt relative to equatorial plane, degrees."
   },
-
   "moon": {
     "orbit_radius_mul": 3.5,
     "_comment_orbit": "Multiplier on planet_radius_units.",
@@ -61,16 +53,18 @@
     "radius_mul": 0.08,
     "_comment_radius_mul": "Moon radius as fraction of planet radius."
   },
-
   "atmosphere": {
     "dust_base": 0.12,
     "_comment_dust": "Baseline dust suspension (0–1). Storms push this higher.",
     "haze_density": 0.55,
     "_comment_haze": "Atmospheric scattering density (0–1). Controls depth-layer separation.",
-    "scattering_color": [0.72, 0.58, 0.45],
+    "scattering_color": [
+      0.72,
+      0.58,
+      0.45
+    ],
     "_comment_scatter": "RGB, normalised. Warm dusty atmosphere tint."
   },
-
   "pixel": {
     "downscale_factor": 4,
     "_comment": "Integer only. Frame rendered at 1/N resolution then upscaled. Range: 3–6.",
@@ -79,16 +73,22 @@
     "palette_levels": 32,
     "_comment_palette": "Effective colour levels per channel after quantisation. Not a hard 8-bit lock."
   },
-
   "lighting": {
     "light_bands": 4,
     "_comment": "Discrete surface shading bands. 0 = smooth, 1–5 = stepped. Range: 0–5.",
     "sun_max_elevation_deg": 35,
     "_comment_elev": "Primary sun elevation cap for default composition state.",
-    "shadow_color": [0.22, 0.25, 0.38],
-    "key_color": [1.0, 0.78, 0.42]
+    "shadow_color": [
+      0.22,
+      0.25,
+      0.38
+    ],
+    "key_color": [
+      1.0,
+      0.78,
+      0.42
+    ]
   },
-
   "climate": {
     "wind_base": 4.5,
     "_comment": "Base wind speed in simulation units/s at sea level.",
@@ -138,7 +138,6 @@
     "melt_threshold": 280.0,
     "_comment_melt": "Temperature (K) above which ice converts back to humidity."
   },
-
   "geo": {
     "event_rate_scree_per_hour": 12,
     "_comment_scree": "Expected scree events per real-time hour across the whole planet.",
@@ -149,7 +148,6 @@
     "slope_instability_threshold": 0.72,
     "stress_threshold": 0.85,
     "void_risk_threshold": 0.68,
-
     "events": {
       "enabled": true,
       "_comment_enabled": "Master switch for the GeoEventSystem.",
@@ -164,7 +162,6 @@
       "cooldown_minutes_per_tile": 5,
       "_comment_cooldown": "Per-tile cooldown in game minutes after an event fires."
     },
-
     "fault": {
       "length": 60,
       "_comment_length": "Default fault crack length in simulation units.",
@@ -173,21 +170,18 @@
       "depth": 10,
       "_comment_depth": "How far radially into the rock the crack penetrates."
     },
-
     "landslide": {
       "volume": 15,
       "_comment_volume": "Carve radius at the slide source (proxy for volume).",
       "runout_length": 50,
       "_comment_runout": "Distance from source to deposit centre in simulation units."
     },
-
     "collapse": {
       "radius": 18,
       "_comment_radius": "Radius of the underground void chamber.",
       "depth": 20,
       "_comment_depth": "Depth below surface of the collapse chamber."
     },
-
     "event": {
       "pre_seconds": 5,
       "_comment_pre": "Duration of the PRE (precursor) phase in game seconds.",
@@ -195,7 +189,6 @@
       "_comment_post": "Duration of the POST (aftermath) phase in game seconds."
     }
   },
-
   "tectonic": {
     "plate_count": 18,
     "_comment_plate_count": "Number of tectonic plates. Range: 12–30.",
@@ -210,14 +203,13 @@
     "_comment_boundary": "Angular distance (radians) within which a point is considered a boundary zone.",
     "ridge_amplitude": 0.55,
     "_comment_ridge": "Height multiplier for convergent ridges (fraction of HEIGHT_SCALE).",
-    "rift_amplitude": 0.40,
+    "rift_amplitude": 0.4,
     "_comment_rift_amp": "Depth multiplier for divergent rift valleys.",
-    "canyon_amplitude": 0.30,
+    "canyon_amplitude": 0.3,
     "_comment_canyon": "Depth multiplier for transform canyons.",
     "dev_visualise": false,
     "_comment_dev": "Dev mode: enable plate/boundary/stress colour overlay (dev only)."
   },
-
   "character": {
     "walk_speed_units_per_s": 1.8,
     "slide_friction_threshold": 0.15,
@@ -227,7 +219,6 @@
     "quake_brace_threshold": 0.4,
     "_comment_quake": "Quake impulse magnitude (normalised) above which brace state activates."
   },
-
   "char": {
     "mass": 75.0,
     "_comment_mass": "Character mass (kg equivalent). Affects wind/impulse response.",
@@ -264,19 +255,16 @@
     "capsule_height": 1.8,
     "_comment_capsule_h": "Character capsule height (simulation units)."
   },
-
   "seed": {
     "default": 42,
     "_comment": "Default world seed. Any integer is valid. Determines all procedural generation."
   },
-
   "time": {
     "scale": 1.0,
     "_comment_scale": "Game-seconds per real-second (WorldClock.time_scale). 1 = real-time. Dev only.",
     "max_frame_dt_clamp": 0.1,
     "_comment_clamp": "Maximum real-time dt per frame (seconds). Prevents spiral-of-death on stalled frames."
   },
-
   "sched": {
     "insolation_hz": 2.0,
     "_comment_insol_hz": "Update rate for InsolationField in Hz (calls per game-second). Range: 2–5.",
@@ -295,7 +283,6 @@
     "job_max_per_frame": 4,
     "_comment_job_max": "Maximum number of queued jobs processed per frame."
   },
-
   "lod": {
     "min_lod": 0,
     "_comment_min": "Minimum quadtree depth (0 = whole face as one tile).",
@@ -310,7 +297,6 @@
     "debug": false,
     "_comment_debug": "When true, logs active tile count and job-queue depth each frame."
   },
-
   "insolation": {
     "field_width": 64,
     "_comment_width": "Equirectangular grid width (longitude axis). 64 is adequate for climate; use 512 for high-fidelity renders.",
@@ -321,7 +307,6 @@
     "update_interval_s": 1.0,
     "_comment_interval": "Target interval (game seconds) between full-field passes. Informational only; actual rate depends on cells_per_tick and call frequency."
   },
-
   "atmo": {
     "haze_density_base": 0.003,
     "_comment_haze_density": "Base exponential haze density (Beer-Lambert). Higher = thicker haze at all distances.",
@@ -344,20 +329,26 @@
     "sun2_sky_limit": 0.5,
     "_comment_sun2_limit": "Maximum fraction of Sun1's sky contribution that Sun2 can add (prevents washed-out sky)."
   },
-
   "grade": {
     "filmic_toe": 0.04,
     "_comment_filmic_toe": "Filmic curve toe breakpoint. Values below this pass through linearly.",
     "filmic_shoulder": 0.85,
     "_comment_filmic_shoulder": "Filmic curve shoulder breakpoint. Values above this are compressed toward white.",
-    "shadow_tint": [0.80, 0.85, 1.00],
+    "shadow_tint": [
+      0.8,
+      0.85,
+      1.0
+    ],
     "_comment_shadow_tint": "RGB tint applied to dark (shadow) tones for cool-shadow split-toning.",
-    "highlight_tint": [1.00, 0.95, 0.80],
+    "highlight_tint": [
+      1.0,
+      0.95,
+      0.8
+    ],
     "_comment_highlight_tint": "RGB tint applied to bright (highlight) tones for warm-highlight split-toning.",
-    "sat_far_scale": 0.30,
+    "sat_far_scale": 0.3,
     "_comment_sat_far": "Maximum desaturation applied to far pixels (fog_factor=1). 0=no desat, 1=full greyscale."
   },
-
   "sdf": {
     "lod": 4,
     "_comment_lod": "LOD level of surface tiles used as SDF chunk anchors. Higher = finer tiles = more chunks near player.",
@@ -376,7 +367,6 @@
     "dev_carve_radius": 20.0,
     "_comment_dev_carve_r": "Radius of the dev-mode test carve sphere (simulation units)."
   },
-
   "env": {
     "wind_lean_max": 20.0,
     "_comment_wind_lean_max": "Wind speed (m/s) at which upper-body lean reaches maximum.",
@@ -399,7 +389,6 @@
     "variation_strength": 0.08,
     "_comment_variation_strength": "Max fractional micro-variation added to stride/cadence."
   },
-
   "reflex": {
     "balance_recovery_rate": 0.3,
     "_comment_recovery": "Balance recovery speed per second while grounded, slow, and braced/crouched.",
@@ -436,11 +425,9 @@
     "dev_visualise": false,
     "_comment_dev_vis": "Dev mode: log reflex state and probe rays each tick (no UI)."
   },
-
   "cam": {
     "mode_cooldown_sec": 5.0,
     "_comment_cooldown": "Minimum seconds a camera mode must be held before switching again.",
-
     "explore": {
       "dist": 4.5,
       "_comment_dist": "Camera boom distance (simulation units) in Exploration mode.",
@@ -449,7 +436,6 @@
       "fov": 62.0,
       "_comment_fov": "Vertical field-of-view (degrees) in Exploration mode."
     },
-
     "struggle": {
       "dist": 2.8,
       "_comment_dist": "Camera boom distance in Struggle mode (closer to character).",
@@ -458,7 +444,6 @@
       "fov": 58.0,
       "_comment_fov": "Vertical field-of-view in Struggle mode."
     },
-
     "awe": {
       "dist": 7.0,
       "_comment_dist": "Camera boom distance in Awe mode (further back).",
@@ -471,7 +456,6 @@
       "min_hold_sec": 8.0,
       "_comment_min_hold": "Minimum seconds Awe mode is held once triggered."
     },
-
     "spring": {
       "freq_pos": 3.0,
       "_comment_freq_pos": "Spring natural frequency for position (rad/s). Higher = snappier follow.",
@@ -482,25 +466,18 @@
       "damp_rot": 0.85,
       "_comment_damp_rot": "Damping ratio for rotation spring."
     },
-
     "collision_radius": 0.25,
     "_comment_collision_radius": "Sphere-cast radius for camera collision detection (simulation units).",
-
     "wind_shake_k": 0.004,
     "_comment_wind_shake_k": "Scale factor: shake amplitude per (m/s) of wind speed.",
-
     "geo_shake_k_pre": 0.015,
     "_comment_geo_shake_pre": "Shake amplitude per unit of pre-event intensity.",
-
     "geo_shake_k_impact": 0.06,
     "_comment_geo_shake_impact": "Shake amplitude (kick) per unit of impact intensity.",
-
     "pan_to_event_max_deg": 15.0,
     "_comment_pan_max": "Maximum degrees the camera pans toward a geo-event epicentre.",
-
     "shoulder_offset": 0.35,
     "_comment_shoulder": "Lateral shoulder offset for slight over-the-shoulder framing.",
-
     "struggle_enter_visibility": 0.35,
     "_comment_struggle_enter_vis": "Visibility threshold below which Struggle mode is entered.",
     "struggle_exit_visibility": 0.45,
@@ -509,13 +486,11 @@
     "_comment_struggle_enter_storm": "Storm intensity threshold above which Struggle mode is entered.",
     "struggle_exit_storm": 0.45,
     "_comment_struggle_exit_storm": "Storm intensity threshold below which Struggle mode can be exited.",
-
     "awe_enter_eclipse": 0.7,
     "_comment_awe_enter_eclipse": "Eclipse factor above which Awe mode can be triggered.",
     "awe_enter_visibility": 0.5,
     "_comment_awe_enter_vis": "Minimum visibility required for Awe mode to trigger."
   },
-
   "anim": {
     "base_stride": 0.8,
     "_comment_stride": "Base stride length in simulation units. Scaled by AnimParamFrame.stride_length.",
@@ -542,62 +517,43 @@
     "layer_blend_curves": "ease_in_out",
     "_comment_blend": "Easing function used for action-layer blend weights. Currently: ease_in_out."
   },
-
   "audio": {
     "_comment": "Stage 19 ProceduralAudioSystem — all synthesis, no external assets.",
-
     "master_gain": 0.9,
     "_comment_master": "Global output amplitude multiplier [0..1].",
-
     "wind_gain": 1.0,
     "_comment_wind_gain": "Wind channel output gain.",
-
     "storm_gain": 1.2,
     "_comment_storm_gain": "Storm/whiteout channel output gain.",
-
     "foot_gain": 1.0,
     "_comment_foot_gain": "Footsteps channel output gain.",
-
     "suit_gain": 0.5,
     "_comment_suit_gain": "Suit (breath/fabric/servo) channel output gain. Low by design — suit is subtle.",
-
     "geo_gain": 1.0,
     "_comment_geo_gain": "Shared geo channel gain multiplier.",
-
     "wind_whistle_enable": true,
     "_comment_whistle_enable": "Enable narrow-band wind whistle layer in strong winds.",
-
     "wind_whistle_strength": 0.3,
     "_comment_whistle_strength": "Amplitude multiplier for wind whistle layer [0..1].",
-
     "storm_duck_strength": 0.7,
     "_comment_storm_duck": "How strongly the Storm channel ducks Footsteps and Suit [0=no duck, 1=full silence].",
-
     "foot_dust_tail_ms": 120.0,
     "_comment_foot_dust_tail": "Noise tail length (ms) for a dust-surface footstep.",
-
     "foot_rock_click_strength": 1.4,
     "_comment_foot_rock_click": "Amplitude multiplier for the short high-frequency click on rock surfaces.",
-
     "foot_ice_squeal_strength": 0.8,
     "_comment_foot_ice_squeal": "Amplitude of the ice-squeal band-pass layer on ice footsteps.",
-
     "geo_pre_rumble_gain": 0.5,
     "_comment_geo_pre_rumble": "Gain for the PRE-phase infrasound rumble.",
-
     "geo_pre_rumble_release_s": 5.0,
     "_comment_geo_pre_release": "Release time (seconds) for the PRE-phase rumble envelope.",
-
     "geo_impact_gain": 1.0,
     "_comment_geo_impact": "Gain for the IMPACT-phase thump and debris bursts.",
-
     "limiter_threshold": 0.95,
     "_comment_limiter_threshold": "Master limiter kick-in level [0..1]. Values above this are compressed.",
-
     "limiter_release": 0.2,
     "_comment_limiter_release": "Master limiter release time in seconds."
   },
-
   "save": {
     "autosave_minutes": 2.0,
     "_comment_autosave": "Interval (simulated minutes) between automatic saves.",
@@ -606,7 +562,6 @@
     "schema_version": 1,
     "_comment_schema": "Save-file schema version; increment when save format changes."
   },
-
   "boot": {
     "spawn_attempts": 64,
     "_comment_spawn_attempts": "Number of candidate spawn points evaluated; more → better spawn, slower boot.",
@@ -619,12 +574,10 @@
     "warmup_seconds": 10,
     "_comment_warmup": "Simulated seconds of climate warm-up on first boot (no saved snapshot)."
   },
-
   "dev": {
     "headless_mode": false,
     "_comment_headless": "When true, disables all rendering and audio (for CI / smoke tests)."
   },
-
   "net": {
     "_comment": "Stage 21/22 — multiplayer networking layer.",
     "enabled": false,
@@ -658,7 +611,6 @@
     "resync_hard_threshold_sec": 5.0,
     "_comment_resync_hard": "simTime error (seconds) above which a hard time-resync is applied on the client."
   },
-
   "perf": {
     "_comment": "Stage 22 — client-side CPU/GPU budget parameters.",
     "mesh_budget_ms": 4.0,
@@ -668,7 +620,6 @@
     "auto_quality_enable": true,
     "_comment_auto_quality": "When true the client automatically reduces quality (vol steps, update divisor) on low FPS."
   },
-
   "web": {
     "_comment": "Stage 23 — browser deploy / WASM build settings.",
     "build_id": "",
@@ -690,9 +641,21 @@
     "enable_range_requests": true,
     "_comment_range": "Serve Accept-Ranges: bytes for binary asset files."
   },
-
   "world": {
     "reset_on_missing_state": true,
     "_comment": "When true, a missing world_state/ creates a fresh world on next start."
+  },
+  "ops": {
+    "_comment": "Stage 24 — operational layer configuration.",
+    "log_rotate_mb": 100,
+    "log_keep_files": 10,
+    "baseline_interval_min": 60,
+    "baseline_size_trigger_mb": 200,
+    "world_state_size_cap_mb": 500,
+    "max_geo_events_per_hour": 10000,
+    "max_patch_batches_per_min": 1000,
+    "reset_flag_path": "world_state/RESET_NOW",
+    "enable_local_ops_http": true,
+    "ops_http_bind": "127.0.0.1"
   }
 }
