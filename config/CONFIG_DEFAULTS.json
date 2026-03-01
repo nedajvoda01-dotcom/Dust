@@ -750,5 +750,28 @@
     "_comment_dust_peak_density": "Peak visibility-reduction density of a dust wave [0..1].",
     "cooldown_same_cave_sec": 120.0,
     "_comment_cooldown_same_cave_sec": "Minimum seconds between hazard events in the same cave zone."
+  },
+  "biome": {
+    "_comment": "Stage 28 — BiomeAtlasSystem configuration.",
+    "enable": true,
+    "macro_scale_km": 150.0,
+    "meso_scale_km": 8.0,
+    "domain_warp_strength": 0.15,
+    "fracture_band_threshold": 0.55,
+    "impact_zone_frequency": 0.88
+  },
+  "mat": {
+    "_comment": "Stage 28 — ProceduralMaterialSystem v2 tuning.",
+    "micro_normal_strength": 0.15,
+    "speckle_strength": 0.04
+  },
+  "overlay": {
+    "_comment": "Stage 28 — transient surface overlay parameters.",
+    "dust_max": 1.0,
+    "ice_max": 1.0,
+    "debris_max": 1.0,
+    "ice_temp_threshold": 220.0,
+    "dust_deposition_rate": 0.6,
+    "dust_erosion_rate_wind": 0.8
   }
 }

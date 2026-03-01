@@ -1,4 +1,4 @@
-"""ProceduralMaterialSystem — Stage 10 texture-free surface material.
+"""ProceduralMaterialSystem — Stage 10/28 texture-free surface material (v2).
 
 No bitmap textures, texture samplers, normal-map files, or UV-based
 patterns are used anywhere in this module.  All colour, roughness, and
@@ -8,6 +8,7 @@ micro-normal information is derived from:
   * geological fields  (hardness, fracture, boundaryType)
   * climate fields     (dust, wetness, ice, temperature)
   * procedural 3D noise (see ProceduralNoise)
+  * BiomeAtlas biome classification (Stage 28)
 
 Public API
 ----------
@@ -23,16 +24,25 @@ Rock types (virtual, no files)
 2  LayeredSediment — horizontal banding by height; prominent in rifts
 3  FracturedRock   — high contrast, fine noise fractures
 4  IceFilm         — near-specular, blue-tinted; present when ice > threshold
+
+Stage 28 additions
+------------------
+* evaluate() now accepts an optional ``biome_id`` (BiomeId) parameter.
+  When provided, the BiomeParams base albedo and roughness range are used
+  instead of the legacy rock-type blend.  If None, the legacy path runs.
+* New DebugMode values: DEBUG_BIOME, DEBUG_ICE_OVERLAY, DEBUG_DUST_OVERLAY.
 """
 from __future__ import annotations
 
 import math
 from dataclasses import dataclass
 from enum import Enum, auto
+from typing import Optional
 
 from src.math.Vec3 import Vec3
 from src.planet.TectonicPlatesSystem import BoundaryType
 from src.render.ProceduralNoise import fbm3, gradient3
+from src.systems.BiomeAtlasSystem import BIOME_PARAMS, BiomeId
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -82,12 +92,15 @@ _WET_ROUGH_K     = 0.30   # max roughness reduction
 
 class DebugMode(Enum):
     """Development visualisation channels."""
-    NONE            = auto()
-    DEBUG_SLOPE     = auto()
-    DEBUG_DUST      = auto()
-    DEBUG_ROCKTYPE  = auto()
-    DEBUG_FRACTURE  = auto()
-    DEBUG_BOUNDARY  = auto()
+    NONE              = auto()
+    DEBUG_SLOPE       = auto()
+    DEBUG_DUST        = auto()
+    DEBUG_ROCKTYPE    = auto()
+    DEBUG_FRACTURE    = auto()
+    DEBUG_BOUNDARY    = auto()
+    DEBUG_BIOME       = auto()   # Stage 28: false-colour by BiomeId
+    DEBUG_ICE_OVERLAY = auto()   # Stage 28: ice overlay intensity
+    DEBUG_DUST_OVERLAY = auto()  # Stage 28: dust overlay intensity
 
 
 # ---------------------------------------------------------------------------
@@ -101,6 +114,9 @@ class MaterialInput:
     ``slope`` is expected to be in [0, 1] where 0 = flat (normal = Up)
     and 1 = vertical.  ``curvature`` is negative for concave regions and
     positive for convex regions; typical range −1 .. +1.
+
+    ``biome_id`` (Stage 28) — when provided, the biome's base albedo and
+    roughness range take priority over the legacy rock-type blend.
     """
     world_pos:     Vec3
     world_normal:  Vec3
@@ -116,6 +132,8 @@ class MaterialInput:
     wetness:       float          # [0, 1]
     ice:           float          # [0, 1]
     temperature:   float          # Kelvin
+    # Stage 28: optional biome classification
+    biome_id:      Optional[BiomeId] = None
 
 
 @dataclass
@@ -194,6 +212,20 @@ _BOUNDARY_DEBUG_COLORS = {
     BoundaryType.TRANSFORM:  Vec3(0.9, 0.7, 0.1),
 }
 
+# Stage 28: false-colour per BiomeId for DEBUG_BIOME
+_BIOME_DEBUG_COLORS: dict[Optional[BiomeId], Vec3] = {
+    BiomeId.IRON_SAND:          Vec3(0.80, 0.35, 0.20),
+    BiomeId.BASALT_PLATEAU:     Vec3(0.20, 0.20, 0.20),
+    BiomeId.ASH_FIELDS:         Vec3(0.55, 0.52, 0.50),
+    BiomeId.SALT_FLATS:         Vec3(0.95, 0.95, 0.90),
+    BiomeId.GLASSY_IMPACT:      Vec3(0.20, 0.75, 0.60),
+    BiomeId.ICE_CRUST:          Vec3(0.60, 0.80, 1.00),
+    BiomeId.SCREE_SLOPES:       Vec3(0.65, 0.50, 0.35),
+    BiomeId.FRACTURE_BANDS:     Vec3(0.70, 0.10, 0.10),
+    BiomeId.SUBSURFACE_BEDROCK: Vec3(0.15, 0.10, 0.20),
+    None:                       Vec3(0.50, 0.50, 0.50),
+}
+
 
 # ---------------------------------------------------------------------------
 # ProceduralMaterialSystem
@@ -224,7 +256,8 @@ class ProceduralMaterialSystem:
         Parameters
         ----------
         inp:
-            All per-fragment data.
+            All per-fragment data.  If ``inp.biome_id`` is set (Stage 28)
+            the biome's base albedo and roughness guide the output.
         debug_mode:
             When not ``NONE`` the colour is replaced by a diagnostic
             heatmap; roughness and micro_normal are still computed
@@ -239,17 +272,35 @@ class ProceduralMaterialSystem:
         (w_dust, w_basalt, w_sediment, w_fracture,
          dominant_id) = self._rock_weights(inp, slope_mask, concavity, height_band_t)
 
-        # 3. Base rock colour & roughness
+        # 3. Base rock colour & roughness (legacy path)
         rock_color, rock_rough = self._blend_rock(
             w_dust, w_basalt, w_sediment, w_fracture)
 
+        # 3b. Stage 28: biome override — blend toward BiomeParams base albedo
+        if inp.biome_id is not None:
+            bp = BIOME_PARAMS[inp.biome_id]
+            # Use fracture/slope as blending factor toward biome colour
+            biome_t = _saturate(0.6 + (1.0 - inp.fracture) * 0.3)
+            rock_color = _lerp_v(rock_color, bp.base_albedo, biome_t)
+            # Roughness from biome range, modulated by fracture
+            biome_rough = _lerp(bp.roughness_min, bp.roughness_max, inp.fracture)
+            rock_rough  = _lerp(rock_rough, biome_rough, biome_t)
+            # Micro-normal strength from biome
+            micro_strength = _lerp(
+                w_dust * _MICRO_DUST + w_basalt * _MICRO_BASALT +
+                w_sediment * _MICRO_SEDIMENT + w_fracture * _MICRO_FRACTURE,
+                bp.micro_normal_str,
+                biome_t,
+            )
+        else:
+            micro_strength = (
+                w_dust     * _MICRO_DUST    +
+                w_basalt   * _MICRO_BASALT  +
+                w_sediment * _MICRO_SEDIMENT +
+                w_fracture * _MICRO_FRACTURE
+            )
+
         # 4. Micro-normal perturbation (noise gradient, world-space, max 3 oct.)
-        micro_strength = (
-            w_dust     * _MICRO_DUST    +
-            w_basalt   * _MICRO_BASALT  +
-            w_sediment * _MICRO_SEDIMENT +
-            w_fracture * _MICRO_FRACTURE
-        )
         micro_normal = self._micro_normal(inp.world_pos, inp.world_normal, micro_strength)
 
         # 5. Dust overlay
@@ -464,5 +515,11 @@ class ProceduralMaterialSystem:
             return _heatmap(inp.fracture)
         if mode == DebugMode.DEBUG_BOUNDARY:
             return _BOUNDARY_DEBUG_COLORS.get(inp.boundary_type, Vec3(0.5, 0.5, 0.5))
+        if mode == DebugMode.DEBUG_BIOME:
+            return _BIOME_DEBUG_COLORS.get(inp.biome_id, Vec3(0.5, 0.5, 0.5))
+        if mode == DebugMode.DEBUG_ICE_OVERLAY:
+            return _heatmap(inp.ice)
+        if mode == DebugMode.DEBUG_DUST_OVERLAY:
+            return _heatmap(inp.dust)
         # Fallback (should not be reached)
         return Vec3(1.0, 0.0, 1.0)
