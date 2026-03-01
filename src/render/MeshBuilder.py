@@ -9,9 +9,10 @@ from src.math.Vec3 import Vec3
 
 @dataclass
 class Mesh:
-    vertices: list  # list of (x,y,z) tuples
-    normals: list   # list of (x,y,z) tuples
-    indices: list   # list of int triangles (triplets)
+    vertices: list              # list of (x,y,z) tuples
+    normals: list               # list of (x,y,z) tuples
+    indices: list               # list of int triangles (triplets)
+    colors: list = field(default_factory=list)  # optional per-vertex (r,g,b)
 
 
 class MeshBuilder:

@@ -79,13 +79,21 @@ class Renderer:
         mesh = self._meshes.get(mesh_id)
         if mesh is None:
             return
-        glColor3f(*color)
+        self.draw_mesh_direct(mesh, color)
+
+    def draw_mesh_direct(self, mesh: Mesh, color: tuple = (0.72, 0.58, 0.45)) -> None:
+        """Draw a Mesh object directly (not required to be registered)."""
+        use_vcolors = bool(mesh.colors)
+        if not use_vcolors:
+            glColor3f(*color)
         glBegin(GL_TRIANGLES)
         for i in range(0, len(mesh.indices), 3):
             for k in range(3):
                 idx = mesh.indices[i + k]
                 n = mesh.normals[idx]
                 v = mesh.vertices[idx]
+                if use_vcolors:
+                    glColor3f(*mesh.colors[idx])
                 glNormal3f(*n)
                 glVertex3f(*v)
         glEnd()

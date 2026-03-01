@@ -99,5 +99,20 @@
   "seed": {
     "default": 42,
     "_comment": "Default world seed. Any integer is valid. Determines all procedural generation."
+  },
+
+  "lod": {
+    "min_lod": 0,
+    "_comment_min": "Minimum quadtree depth (0 = whole face as one tile).",
+    "max_lod": 7,
+    "_comment_max": "Maximum quadtree depth. Each level halves the tile angular size.",
+    "tile_resolution": 17,
+    "_comment_res": "NxN vertices per tile. Must be 2^k+1 (e.g. 9, 17, 33).",
+    "max_active_tiles": 256,
+    "_comment_active": "Hard cap on simultaneously active leaf tiles across all faces.",
+    "max_jobs_per_frame": 4,
+    "_comment_jobs": "Max tile meshes built per game frame (controls stutter budget).",
+    "debug": false,
+    "_comment_debug": "When true, logs active tile count and job-queue depth each frame."
   }
 }
