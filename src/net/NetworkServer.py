@@ -72,6 +72,7 @@ from src.net.PlayerIdentity import make_player_key
 from src.net.PlayerRegistry import PlayerRegistry
 from src.net.SpawnAnchor import SpawnAnchor
 from src.net.WorldState import WorldState
+from src.net.TrailEventProtocol import decode_trail_events, should_relay
 from src.ops.OpsLayer import OpsLayer
 
 _TAG        = "NetworkServer"
@@ -686,6 +687,10 @@ class NetworkServer:
             last_event_id = int(msg.get("lastEventId", -1))
             await self._send_rejoin(ws, player_id, last_event_id)
 
+        elif msg_type == "TRAIL_BATCH":
+            # Stage 25 — relay trail events to nearby players (interest-based)
+            await self._relay_trail_batch(player_id, msg)
+
         # JOIN: just a reconnect hint — no action needed
 
     # ------------------------------------------------------------------
@@ -743,6 +748,45 @@ class NetworkServer:
         for pid, ws in list(self._connections.items()):
             try:
                 await ws.send(msg)
+                self._ops.on_ws_msg_out()
+            except Exception:
+                dead.append(pid)
+        for pid in dead:
+            self._connections.pop(pid, None)
+
+    async def _relay_trail_batch(self, sender_id: str, msg: Dict[str, Any]) -> None:
+        """Stage 25 — forward a TRAIL_BATCH to nearby players only.
+
+        The batch is forwarded to every connected player that is within the
+        interest zone of the sender (same angular-sector neighbourhood).
+        The sender itself is excluded.  Players with no known position receive
+        the batch unconditionally (conservative fallback).
+        """
+        events = decode_trail_events(msg)
+        if not events:
+            return
+
+        sender_pos = self._registry.get_player_pos(sender_id)
+
+        relay_msg = json.dumps({
+            "type":     "TRAIL_EVENT",
+            "playerId": sender_id,
+            "events":   msg.get("events", []),
+        })
+
+        dead: List[str] = []
+        for pid, ws in list(self._connections.items()):
+            if pid == sender_id:
+                continue
+            # Interest check: skip players too far away
+            if sender_pos is not None:
+                recipient_pos = self._registry.get_player_pos(pid)
+                if recipient_pos is not None:
+                    if not should_relay(sender_pos, recipient_pos,
+                                        self._sector_deg, self._sector_radius):
+                        continue
+            try:
+                await ws.send(relay_msg)
                 self._ops.on_ws_msg_out()
             except Exception:
                 dead.append(pid)

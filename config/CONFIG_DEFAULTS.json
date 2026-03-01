@@ -657,5 +657,32 @@
     "reset_flag_path": "world_state/RESET_NOW",
     "enable_local_ops_http": true,
     "ops_http_bind": "127.0.0.1"
+  },
+  "presence": {
+    "_comment": "Stage 25 — diegetic multiplayer presence (no UI, no markers).",
+    "headlamp_intensity_day": 0.15,
+    "_comment_headlamp_day": "Headlamp output multiplier during daylight. Low — barely noticeable in bright light.",
+    "headlamp_intensity_night": 1.0,
+    "_comment_headlamp_night": "Headlamp output multiplier at night. Full beam visible at distance.",
+    "headlamp_scatter_in_whiteout": 0.6,
+    "_comment_headlamp_scatter": "Whiteout scatter halo radius multiplier. 0=no halo, 1=max diffuse dome.",
+    "trails_ttl_sec": 90,
+    "_comment_trails_ttl": "Default trail segment lifetime in seconds on dust/debris surfaces.",
+    "trails_ttl_storm_multiplier": 0.25,
+    "_comment_trails_ttl_storm": "Multiply TTL by this factor during storm (wind erases faster). Range 0..1.",
+    "trails_max_segments_near": 512,
+    "_comment_trails_max": "Maximum active trail segments within the near-camera zone (LRU eviction).",
+    "trails_sector_cache_size": 64,
+    "_comment_trails_sector": "Number of planet sectors cached for trail data.",
+    "net_trail_batch_ms": 300,
+    "_comment_net_trail_batch": "Client-side trail event batch window in milliseconds.",
+    "audio_remote_foot_gain": 0.6,
+    "_comment_audio_remote_foot": "Gain for remote player footstep sounds (distance-attenuated on top of this).",
+    "audio_remote_cutoff_storm": 400.0,
+    "_comment_audio_remote_cutoff": "LP-filter cutoff (Hz) applied to remote footsteps during storm.",
+    "remote_lod_distance_1": 40.0,
+    "_comment_remote_lod_1": "Distance (sim units) below which full procedural animation is used for remote players.",
+    "remote_lod_distance_2": 120.0,
+    "_comment_remote_lod_2": "Distance (sim units) above which only the cheapest LOD rig is used."
   }
 }
