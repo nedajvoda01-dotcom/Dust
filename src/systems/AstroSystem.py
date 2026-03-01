@@ -1,0 +1,302 @@
+"""AstroSystem — Stage 6 astronomical simulation.
+
+Provides:
+- Binary sun circular orbit (barycenter model)
+- Planet spin / day-night cycle
+- Eclipse detection and eclipseFactor
+- Ring shadow computation (RingShadowFactor)
+- Moon orbit in ring plane
+- InsolationSample API for climate / renderer integration
+
+All motion is deterministic for a given seed and config.
+"""
+from __future__ import annotations
+
+import math
+from dataclasses import dataclass, field
+
+from src.core.Config import Config
+from src.math.Vec3 import Vec3
+from src.systems.AstroSystemStub import IAstroSystem
+
+_TWO_PI = 2.0 * math.pi
+_BARY_DIST_FACTOR = 3.0   # barycenter distance = orbit_sep * _BARY_DIST_FACTOR
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _clamp(v: float, lo: float, hi: float) -> float:
+    return lo if v < lo else (hi if v > hi else v)
+
+
+def _smoothstep(edge0: float, edge1: float, x: float) -> float:
+    if edge1 <= edge0:
+        return 1.0 if x >= edge1 else 0.0
+    t = _clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0)
+    return t * t * (3.0 - 2.0 * t)
+
+
+def _rotate_around_axis(v: Vec3, axis: Vec3, angle: float) -> Vec3:
+    """Rodrigues' rotation formula: rotate v around (unit) axis by angle (rad)."""
+    cos_a = math.cos(angle)
+    sin_a = math.sin(angle)
+    d = axis.dot(v)
+    return v * cos_a + axis.cross(v) * sin_a + axis * (d * (1.0 - cos_a))
+
+
+def _perpendicular_basis(n: Vec3) -> tuple[Vec3, Vec3]:
+    """Return two unit vectors (e1, e2) that form an orthonormal basis with n.
+    e1 and e2 lie in the plane perpendicular to n."""
+    n = n.normalized()
+    if abs(n.y) < 0.9:
+        ref = Vec3(0.0, 1.0, 0.0)
+    else:
+        ref = Vec3(1.0, 0.0, 0.0)
+    e1 = ref.cross(n).normalized()
+    e2 = n.cross(e1).normalized()
+    return e1, e2
+
+
+# ---------------------------------------------------------------------------
+# InsolationSample
+# ---------------------------------------------------------------------------
+
+@dataclass
+class InsolationSample:
+    """Insolation data at a surface point.  Consumed by climate / renderer."""
+    direct1: float = 0.0        # NdotL contribution from primary sun
+    direct2: float = 0.0        # NdotL contribution from secondary sun
+    total_direct: float = 0.0   # combined (ring shadow + eclipse applied)
+    ring_shadow: float = 0.0    # 0=clear  1=full ring shadow
+    eclipse_factor: float = 0.0 # 0=no eclipse  1=maximum overlap
+    dir1: Vec3 = field(default_factory=Vec3.zero)
+    dir2: Vec3 = field(default_factory=Vec3.zero)
+
+
+# ---------------------------------------------------------------------------
+# AstroSystem
+# ---------------------------------------------------------------------------
+
+class AstroSystem(IAstroSystem):
+    """Full astronomical system for Dust Stage 6."""
+
+    def __init__(self, config: Config | None = None, seed: int = 42) -> None:
+        if config is None:
+            config = Config()
+
+        planet_r: float = config.get("planet", "radius_units", default=1000.0)
+
+        # --- time ---
+        self._day_len_s: float = config.get("day", "length_minutes", default=90) * 60.0
+        self._binary_period_s: float = config.get("binary", "period_minutes", default=18) * 60.0
+        self._time_scale: float = config.get("astro", "time_scale", default=1.0)
+
+        # --- binary orbit ---
+        sep_mul: float = config.get("astro", "orbit_separation_mul", default=5.0)
+        self._orbit_sep: float = sep_mul * planet_r  # a — separation between the two suns
+        mass_ratio: float = config.get("binary", "mass_ratio", default=0.35)  # M2/M1
+        total = 1.0 + mass_ratio
+        self._r1: float = self._orbit_sep * (mass_ratio / total)   # sun1 orbit radius from barycentre
+        self._r2: float = self._orbit_sep * (1.0 / total)          # sun2 orbit radius from barycentre
+
+        # --- intensities ---
+        self._sun1_intensity: float = config.get("sun1", "intensity", default=1.0)
+        self._sun2_intensity: float = config.get("sun2", "intensity", default=0.35)
+
+        # --- angular radii (for eclipse disc overlap) ---
+        self._sun1_ang_r: float = math.radians(
+            config.get("sun1", "angular_radius_deg", default=1.0))
+        self._sun2_ang_r: float = math.radians(
+            config.get("sun2", "angular_radius_deg", default=0.7))
+
+        # --- ring geometry ---
+        ring_tilt_rad: float = math.radians(config.get("ring", "tilt_deg", default=14.0))
+        self._ring_normal: Vec3 = Vec3(0.0, math.cos(ring_tilt_rad), math.sin(ring_tilt_rad)).normalized()
+        self._ring_inner: float = config.get("ring", "inner_radius_mul", default=1.4) * planet_r
+        self._ring_outer: float = config.get("ring", "outer_radius_mul", default=2.1) * planet_r
+        self._ring_eps: float = (self._ring_outer - self._ring_inner) * 0.05
+
+        # --- moon ---
+        self._moon_orbit_r: float = config.get("moon", "orbit_radius_mul", default=3.5) * planet_r
+        self._moon_period_s: float = config.get("moon", "period_minutes", default=45) * 60.0
+
+        # --- fixed axes ---
+        self._spin_axis: Vec3 = Vec3(0.0, 1.0, 0.0)
+        # Binary orbit: barycenter placed at large distance along +Z.
+        # The orbit plane contains the planet→barycenter axis (edge-on geometry)
+        # so that the suns can eclipse each other as seen from the planet.
+        bary_distance = self._orbit_sep * _BARY_DIST_FACTOR
+        self._bary_pos: Vec3 = Vec3(0.0, 0.0, bary_distance)
+        self._oe1: Vec3 = Vec3(0.0, 0.0, 1.0)   # toward barycenter
+        self._oe2: Vec3 = Vec3(1.0, 0.0, 0.0)   # perpendicular (X)
+        # Ring / moon orbit plane
+        self._re1, self._re2 = _perpendicular_basis(self._ring_normal)
+
+        # Planet centre fixed at world origin
+        self._planet_center: Vec3 = Vec3.zero()
+
+        # --- mutable state ---
+        self._t: float = 0.0
+        self._spin_angle: float = 0.0
+        self._sun1_world_pos: Vec3 = Vec3.zero()
+        self._sun2_world_pos: Vec3 = Vec3.zero()
+        self._moon_world_pos: Vec3 = Vec3.zero()
+        self._sun1_dir: Vec3 = Vec3.zero()   # unit vec from planet centre → sun1
+        self._sun2_dir: Vec3 = Vec3.zero()
+
+        self._update_state(0.0)
+
+    # ------------------------------------------------------------------
+    # IAstroSystem interface
+    # ------------------------------------------------------------------
+
+    def update(self, game_time: float) -> None:  # noqa: D102
+        """Advance the simulation to game_time (seconds, unscaled)."""
+        self._update_state(game_time * self._time_scale)
+
+    def get_sun_directions(self) -> tuple[Vec3, Vec3]:  # noqa: D102
+        return self._sun1_dir, self._sun2_dir
+
+    def get_ring_shadow_factor(self, pos: Vec3) -> float:  # noqa: D102
+        """Combined ring shadow at pos using the primary (sun1) direction."""
+        return self._ring_shadow_for_sun(pos, self._sun1_dir)
+
+    # ------------------------------------------------------------------
+    # Extended public API
+    # ------------------------------------------------------------------
+
+    @property
+    def sun1_world_pos(self) -> Vec3:
+        return self._sun1_world_pos
+
+    @property
+    def sun2_world_pos(self) -> Vec3:
+        return self._sun2_world_pos
+
+    @property
+    def moon_world_pos(self) -> Vec3:
+        return self._moon_world_pos
+
+    @property
+    def spin_angle(self) -> float:
+        """Current planet spin angle (radians, monotonically increasing)."""
+        return self._spin_angle
+
+    @property
+    def planet_spin_axis(self) -> Vec3:
+        return self._spin_axis
+
+    @property
+    def ring_normal(self) -> Vec3:
+        return self._ring_normal
+
+    def get_eclipse_factor(self) -> float:
+        """Eclipse factor from current sun positions (0=no eclipse, 1=max overlap)."""
+        return self._eclipse_factor(self._sun1_dir, self._sun2_dir)
+
+    def get_ring_shadow_for_sun(self, pos: Vec3, sun_dir: Vec3) -> float:
+        """Ring shadow at pos for a specific sun direction (0=clear, 1=full shadow)."""
+        return self._ring_shadow_for_sun(pos, sun_dir)
+
+    def sample_insolation(self, world_pos: Vec3, world_normal: Vec3) -> InsolationSample:
+        """Compute InsolationSample at a surface point.
+
+        Parameters
+        ----------
+        world_pos:
+            Position in world space (accounting for planet spin).
+        world_normal:
+            Outward surface normal in world space (accounting for planet spin).
+        """
+        dir1 = self._sun1_dir
+        dir2 = self._sun2_dir
+
+        ndotl1 = max(0.0, world_normal.dot(dir1))
+        ndotl2 = max(0.0, world_normal.dot(dir2))
+
+        rs1 = self._ring_shadow_for_sun(world_pos, dir1)
+        rs2 = self._ring_shadow_for_sun(world_pos, dir2)
+        ring_shadow = max(rs1, rs2)  # dominant ring shadow for the sample
+
+        ef = self._eclipse_factor(dir1, dir2)
+
+        d1 = ndotl1 * self._sun1_intensity * (1.0 - rs1)
+        d2 = ndotl2 * self._sun2_intensity * (1.0 - rs2) * (1.0 - ef)
+
+        return InsolationSample(
+            direct1=d1,
+            direct2=d2,
+            total_direct=d1 + d2,
+            ring_shadow=ring_shadow,
+            eclipse_factor=ef,
+            dir1=dir1,
+            dir2=dir2,
+        )
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    def _update_state(self, t: float) -> None:
+        self._t = t
+
+        # Planet spin angle
+        self._spin_angle = _TWO_PI * (t / self._day_len_s)
+
+        # Binary orbit angle
+        binary_angle = _TWO_PI * (t / self._binary_period_s)
+        cos_b = math.cos(binary_angle)
+        sin_b = math.sin(binary_angle)
+
+        # Suns orbit the barycenter.  The orbit plane contains the
+        # planet→barycenter direction (oe1 = +Z) so the two suns align along
+        # the line of sight twice per period, producing eclipses.
+        sun1_offset = self._oe1 * (cos_b * self._r1) + self._oe2 * (sin_b * self._r1)
+        sun2_offset = self._oe1 * (-cos_b * self._r2) + self._oe2 * (-sin_b * self._r2)
+        self._sun1_world_pos = self._bary_pos + sun1_offset
+        self._sun2_world_pos = self._bary_pos + sun2_offset
+
+        # Sun directions from planet centre (unit vectors toward the suns)
+        self._sun1_dir = (self._sun1_world_pos - self._planet_center).normalized()
+        self._sun2_dir = (self._sun2_world_pos - self._planet_center).normalized()
+
+        # Moon orbit in ring plane
+        moon_angle = _TWO_PI * (t / self._moon_period_s)
+        cos_m = math.cos(moon_angle)
+        sin_m = math.sin(moon_angle)
+        self._moon_world_pos = (
+            self._re1 * (cos_m * self._moon_orbit_r)
+            + self._re2 * (sin_m * self._moon_orbit_r)
+        )
+
+    def _eclipse_factor(self, dir1: Vec3, dir2: Vec3) -> float:
+        """Linear eclipse-overlap approximation (0=no eclipse, 1=maximum overlap)."""
+        cos_theta = _clamp(dir1.dot(dir2), -1.0, 1.0)
+        theta = math.acos(cos_theta)
+        sum_r = self._sun1_ang_r + self._sun2_ang_r
+        if sum_r < 1e-12:
+            return 0.0
+        k = _clamp((sum_r - theta) / sum_r, 0.0, 1.0)
+        return k
+
+    def _ring_shadow_for_sun(self, world_pos: Vec3, sun_dir: Vec3) -> float:
+        """Ring shadow at world_pos for the given sun direction.
+
+        Returns 0.0 (clear) when the ray to the sun does not pass through the
+        ring, 1.0 (fully shadowed) when it does.  Soft edges via smoothstep.
+        """
+        denom = sun_dir.dot(self._ring_normal)
+        if abs(denom) < 1e-9:
+            return 0.0  # ray parallel to ring plane
+        t_hit = (self._planet_center - world_pos).dot(self._ring_normal) / denom
+        if t_hit <= 0.0:
+            return 0.0  # intersection behind the point (away from sun)
+        p_hit = world_pos + sun_dir * t_hit
+        r = (p_hit - self._planet_center).length()
+        shadow = (
+            _smoothstep(self._ring_inner, self._ring_inner + self._ring_eps, r)
+            * (1.0 - _smoothstep(self._ring_outer - self._ring_eps, self._ring_outer, r))
+        )
+        return shadow

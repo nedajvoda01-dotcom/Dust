@@ -18,7 +18,32 @@
     "primary_luminosity": 1.0,
     "secondary_luminosity": 0.35,
     "secondary_color_temp_kelvin": 8500,
-    "_comment_color": "Primary is warm (K/G-type ~5000K implied), secondary is hotter/bluer."
+    "_comment_color": "Primary is warm (K/G-type ~5000K implied), secondary is hotter/bluer.",
+    "eccentricity": 0.0,
+    "_comment_eccentricity": "Binary orbit eccentricity. 0 = circular. Range: 0–0.2.",
+    "mass_ratio": 0.35,
+    "_comment_mass_ratio": "M2/M1 mass ratio. Determines barycenter split."
+  },
+
+  "sun1": {
+    "intensity": 1.0,
+    "_comment": "Primary sun luminosity multiplier.",
+    "angular_radius_deg": 1.0,
+    "_comment_ang": "Apparent angular radius of primary sun disc (degrees)."
+  },
+
+  "sun2": {
+    "intensity": 0.35,
+    "_comment": "Secondary sun luminosity multiplier.",
+    "angular_radius_deg": 0.7,
+    "_comment_ang": "Apparent angular radius of secondary sun disc (degrees)."
+  },
+
+  "astro": {
+    "time_scale": 1.0,
+    "_comment": "Global time multiplier for AstroSystem (dev: increase to speed up cycles).",
+    "orbit_separation_mul": 5.0,
+    "_comment_sep": "Binary separation as a multiple of planet_radius_units."
   },
 
   "ring": {
