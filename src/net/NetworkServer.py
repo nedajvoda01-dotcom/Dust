@@ -1,8 +1,17 @@
-"""NetworkServer — Stage 22 authoritative WebSocket + HTTP server.
+"""NetworkServer — Stage 23 authoritative WebSocket + HTTP server.
 
-Serves the browser client (``client/index.html``) over HTTP and
-maintains a WebSocket endpoint for real-time world + player
-synchronisation.
+Serves the browser client over HTTP and maintains a WebSocket endpoint
+for real-time world + player synchronisation.
+
+Stage 23 additions
+------------------
+* ``buildId`` included in every ``WORLD_SYNC`` for cache-busting.
+* Static assets served from ``web_client/dist/`` with proper
+  ``Cache-Control`` (immutable for hashed files, no-cache for index).
+* Security headers: CSP, X-Content-Type-Options, Referrer-Policy.
+* ``Accept-Ranges: bytes`` support for binary asset files.
+* Server-initiated WebSocket ping via ``net.ping_interval_sec``.
+* Correct MIME types for ``.wasm``, ``.js``, ``.bin``.
 
 Architecture
 ------------
@@ -20,7 +29,8 @@ Architecture
 Message types (JSON)
 --------------------
 Server → Client
-  WORLD_SYNC   seed, worldId, simTime, timeScale, spawnPos, geoEvents, anchor
+  WORLD_SYNC   seed, worldId, buildId, simTime, timeScale, spawnPos,
+               geoEvents, anchor
   WORLD_TICK   simTime, timeScale, epoch
   PLAYERS      players: [{id, pos, vel, flags}]
   GEO_EVENT    eventId, eventType, pos, params
@@ -45,13 +55,16 @@ from __future__ import annotations
 
 import asyncio
 import collections
+import hashlib
 import json
 import math
+import mimetypes
 import os
+import re
 import secrets
 import time
 from pathlib import Path
-from typing import Any, Deque, Dict, List, Optional
+from typing import Any, Deque, Dict, List, Optional, Tuple
 
 from src.core.Config import Config
 from src.core.Logger import Logger
@@ -62,6 +75,33 @@ from src.net.WorldState import WorldState
 
 _TAG        = "NetworkServer"
 _CLIENT_DIR = Path(__file__).parent.parent.parent / "client"
+
+# Stage 23 — default static-asset directory (web_client/dist/)
+_DIST_DIR   = Path(__file__).parent.parent.parent / "web_client" / "dist"
+
+# MIME types for assets the stdlib may not know
+_EXTRA_MIME: Dict[str, str] = {
+    ".wasm": "application/wasm",
+    ".bin":  "application/octet-stream",
+    ".js":   "application/javascript",
+    ".mjs":  "application/javascript",
+    ".json": "application/json",
+    ".html": "text/html; charset=utf-8",
+    ".css":  "text/css; charset=utf-8",
+    ".map":  "application/json",
+}
+
+# Security headers added to every HTTP response (Stage 23)
+_SECURITY_HEADERS: List[Tuple[str, str]] = [
+    ("X-Content-Type-Options", "nosniff"),
+    ("Referrer-Policy",        "no-referrer"),
+    # CSP: allow same-origin scripts/workers, ws:// + wss:// connections
+    (
+        "Content-Security-Policy",
+        "default-src 'self'; script-src 'self'; worker-src 'self'; "
+        "connect-src 'self' ws: wss:; img-src 'self' data:; style-src 'self' 'unsafe-inline';",
+    ),
+]
 
 # Config fallbacks
 _DEFAULT_PORT             = 8765
@@ -75,6 +115,7 @@ _DEFAULT_PLAYER_SEND_HZ   = 20        # max client→server msgs/sec
 _DEFAULT_INTERP_DELAY_MS  = 200
 _DEFAULT_MAX_EXTRAP_MS    = 150
 _DEFAULT_RESYNC_THRESHOLD = 5.0       # seconds of drift → hard resync
+_DEFAULT_PING_INTERVAL    = 10        # seconds between server→client pings
 _PLAYER_TIMEOUT_S         = 30.0
 _REJOIN_MAX_CATCHUP_EVENTS = 100      # if more, send full WORLD_SYNC
 
@@ -124,6 +165,10 @@ class NetworkServer:
         self._interp_delay_ms   = _DEFAULT_INTERP_DELAY_MS
         self._max_extrap_ms     = _DEFAULT_MAX_EXTRAP_MS
         self._resync_threshold  = _DEFAULT_RESYNC_THRESHOLD
+        self._ping_interval     = _DEFAULT_PING_INTERVAL
+        self._ws_path           = "/ws"
+        self._static_dir        = _DIST_DIR
+        self._enable_range      = True
 
         if config is not None:
             self._port            = int(config.get(
@@ -148,6 +193,16 @@ class NetworkServer:
                 "net", "max_extrap_ms",         default=_DEFAULT_MAX_EXTRAP_MS))
             self._resync_threshold = float(config.get(
                 "net", "resync_hard_threshold_sec", default=_DEFAULT_RESYNC_THRESHOLD))
+            # Stage 23 — web/ping config
+            self._ping_interval   = int(config.get(
+                "web", "ping_interval_sec",     default=_DEFAULT_PING_INTERVAL))
+            ws_path_cfg = config.get("web", "ws_path", default="/ws")
+            self._ws_path         = str(ws_path_cfg) if ws_path_cfg else "/ws"
+            static_dir_cfg = config.get("web", "static_dir", default="")
+            if static_dir_cfg:
+                self._static_dir  = Path(static_dir_cfg)
+            self._enable_range    = bool(config.get(
+                "web", "enable_range_requests", default=True))
 
         # Planet radius (for spawn anchor)
         planet_r = 1000.0
@@ -183,6 +238,9 @@ class NetworkServer:
 
         # Server salt (regenerated each run — no persistent identity)
         self._server_salt: str = secrets.token_hex(16)
+
+        # Stage 23 — build ID: hash of static assets for cache-busting
+        self._build_id: str = self._compute_build_id()
 
         # WebSocket connection tables  (player_id → ws, ws → player_id)
         self._connections:   Dict[str, Any] = {}
@@ -236,6 +294,10 @@ class NetworkServer:
             asyncio.create_task(self._sim_loop(),          name="sim"),
             asyncio.create_task(self._stale_loop(),        name="stale"),
         ]
+        if self._ping_interval > 0:
+            self._tasks.append(
+                asyncio.create_task(self._ping_loop(), name="ping")
+            )
 
         Logger.info(
             _TAG,
@@ -262,33 +324,163 @@ class NetworkServer:
             await self.stop()
 
     # ------------------------------------------------------------------
-    # HTTP handler — serve client/index.html
+    # HTTP handler — serve client/index.html + web_client/dist/ assets
     # ------------------------------------------------------------------
+
+    # Stage 23: build ID computed from content of static asset files.
+    def _compute_build_id(self) -> str:
+        """Return an 8-hex-char content hash of the static dist directory.
+
+        Falls back gracefully when the dist directory does not yet exist
+        (pre-build state) so that unit tests and fresh checkouts work
+        without running the web build first.
+        """
+        h = hashlib.sha256()
+        # Incorporate the client/index.html if it exists
+        idx = _CLIENT_DIR / "index.html"
+        if idx.exists():
+            h.update(idx.read_bytes())
+        # Incorporate all dist files if the directory exists
+        if self._static_dir.is_dir():
+            for p in sorted(self._static_dir.rglob("*")):
+                if p.is_file():
+                    h.update(p.name.encode())
+                    h.update(p.read_bytes())
+        return h.hexdigest()[:8]
+
+    @staticmethod
+    def _mime_for(path: Path) -> str:
+        """Return the MIME type for *path* using our extended map."""
+        suffix = path.suffix.lower()
+        if suffix in _EXTRA_MIME:
+            return _EXTRA_MIME[suffix]
+        guessed, _ = mimetypes.guess_type(str(path))
+        return guessed or "application/octet-stream"
+
+    @staticmethod
+    def _is_hashed_asset(name: str) -> bool:
+        """Return True when *name* looks like a content-hashed filename.
+
+        Heuristic: the stem contains a dot-separated segment that is
+        8+ hex characters long (e.g. ``client.a1b2c3d4.js``).
+        """
+        return bool(re.search(r'\.[0-9a-f]{8,}\.', name, re.IGNORECASE))
+
+    def _make_response(
+        self,
+        status: int,
+        headers: List[Tuple[str, str]],
+        body: bytes,
+        request_headers=None,
+        range_ok: bool = False,
+    ):
+        """Build an HTTP response tuple, applying security headers.
+
+        When *range_ok* is True and the request contains a ``Range`` header
+        the response will be sliced to the requested byte range (206).
+        """
+        extra = list(_SECURITY_HEADERS)
+
+        if range_ok and request_headers is not None:
+            range_hdr = None
+            try:
+                range_hdr = request_headers.get("Range") or request_headers.get("range")
+            except Exception:
+                pass
+            if range_hdr and range_hdr.startswith("bytes="):
+                try:
+                    spec = range_hdr[6:]
+                    start_s, end_s = spec.split("-", 1)
+                    start = int(start_s) if start_s else 0
+                    end   = int(end_s)   if end_s   else len(body) - 1
+                    end   = min(end, len(body) - 1)
+                    sliced = body[start : end + 1]
+                    range_headers = extra + [
+                        ("Accept-Ranges",  "bytes"),
+                        ("Content-Range",  f"bytes {start}-{end}/{len(body)}"),
+                        ("Content-Length", str(len(sliced))),
+                    ] + headers
+                    return (206, range_headers, sliced)
+                except Exception:
+                    pass
+            # Signal that ranges are supported even when none requested
+            extra.append(("Accept-Ranges", "bytes"))
+
+        all_headers = extra + headers
+        return (status, all_headers, body)
 
     async def _handle_http(self, path: str, request_headers):  # noqa: ANN001
         """Serve the browser client for non-WebSocket requests.
 
-        Returns *None* to let the WebSocket upgrade proceed for ``/ws``.
+        Priority:
+        1. ``/`` and ``/index.html`` → serve ``client/index.html``
+           (no-cache, short max-age).
+        2. ``/ws*`` → return *None* to allow WebSocket upgrade.
+        3. ``/<file>`` → look in ``web_client/dist/``; hashed assets get
+           ``immutable`` cache; non-hashed get ``no-cache``.
+        4. Otherwise → 404.
         """
-        if path in ("/", "/index.html"):
-            html_path = _CLIENT_DIR / "index.html"
-            if html_path.exists():
-                body = html_path.read_bytes()
-                return (
-                    200,
-                    [
-                        ("Content-Type",   "text/html; charset=utf-8"),
-                        ("Content-Length", str(len(body))),
-                    ],
-                    body,
-                )
-            return (404, [], b"client/index.html not found")
+        # Strip query string
+        clean_path = path.split("?", 1)[0].split("#", 1)[0]
 
-        # /ws  → proceed with WebSocket upgrade (return None)
-        if path.startswith("/ws"):
+        # WebSocket upgrade — must come before any other check
+        if clean_path.startswith(self._ws_path):
             return None
 
-        return (404, [], b"Not found")
+        # Root → index.html
+        if clean_path in ("/", "/index.html"):
+            # Prefer web_client/dist/index.html if it exists, else fallback
+            for candidate in (self._static_dir / "index.html", _CLIENT_DIR / "index.html"):
+                if candidate.exists():
+                    body = candidate.read_bytes()
+                    return self._make_response(
+                        200,
+                        [
+                            ("Content-Type",   "text/html; charset=utf-8"),
+                            ("Content-Length", str(len(body))),
+                            ("Cache-Control",  "no-cache"),
+                        ],
+                        body,
+                        request_headers,
+                    )
+            return self._make_response(404, [], b"index.html not found", request_headers)
+
+        # Static assets from web_client/dist/
+        rel = clean_path.lstrip("/")
+        if rel and self._static_dir.is_dir():
+            asset_path = (self._static_dir / rel).resolve()
+            # Security: prevent directory traversal outside _static_dir
+            try:
+                asset_path.relative_to(self._static_dir.resolve())
+            except ValueError:
+                return self._make_response(403, [], b"Forbidden", request_headers)
+            if asset_path.is_file():
+                body = asset_path.read_bytes()
+                mime = self._mime_for(asset_path)
+                is_binary = mime in (
+                    "application/wasm",
+                    "application/octet-stream",
+                )
+                is_hashed = self._is_hashed_asset(asset_path.name)
+                cache = (
+                    "public, max-age=31536000, immutable"
+                    if is_hashed
+                    else "no-cache"
+                )
+                headers: List[Tuple[str, str]] = [
+                    ("Content-Type",   mime),
+                    ("Content-Length", str(len(body))),
+                    ("Cache-Control",  cache),
+                ]
+                return self._make_response(
+                    200,
+                    headers,
+                    body,
+                    request_headers,
+                    range_ok=is_binary and self._enable_range,
+                )
+
+        return self._make_response(404, [], b"Not found", request_headers)
 
     # ------------------------------------------------------------------
     # WebSocket connection handler
@@ -434,6 +626,7 @@ class NetworkServer:
             "type":      "WORLD_SYNC",
             "seed":      self._world_state.seed,
             "worldId":   self._world_state.world_id,
+            "buildId":   self._build_id,
             "simTime":   self._world_state.sim_time,
             "timeScale": self._world_state.time_scale,
             "spawnPos":  spawn_pos,
@@ -573,6 +766,19 @@ class NetworkServer:
         while self._running:
             await asyncio.sleep(10.0)
             self._registry.remove_stale(timeout_s=_PLAYER_TIMEOUT_S)
+
+    async def _ping_loop(self) -> None:
+        """Send a server-initiated ping to all clients every ping_interval_sec.
+
+        Clients reply with PONG; the server uses the RTT to adjust
+        interpolation delay (see client-side PONG handler).  The loop
+        does nothing when ping_interval_sec == 0.
+        """
+        while self._running:
+            await asyncio.sleep(max(1, self._ping_interval))
+            ts = time.time()
+            msg = json.dumps({"type": "PING", "t": ts})
+            await self._broadcast(msg)
 
     # ------------------------------------------------------------------
     # Climate snapshot

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Dust</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%;
+      background: #0a0805;
+      color: #c8a86a;
+      font-family: monospace;
+      font-size: 13px;
+      overflow: hidden;
+    }
+    #canvas {
+      display: block;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      touch-action: none;
+    }
+    #hud {
+      position: fixed;
+      top: 12px; left: 12px;
+      line-height: 1.6;
+      pointer-events: none;
+      text-shadow: 0 0 4px #000;
+    }
+    #status {
+      position: fixed;
+      bottom: 12px; right: 12px;
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    .disconnected { color: #e05050; }
+    .connecting   { color: #e0c050; }
+    .connected    { color: #70c870; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <div id="hud">
+    <div id="hud-world">world: —</div>
+    <div id="hud-pos">pos: —</div>
+    <div id="hud-time">time: —</div>
+    <div id="hud-dust">dust: —</div>
+    <div id="hud-players">players: 0</div>
+  </div>
+  <div id="status" class="connecting">connecting…</div>
+  <script src="client.js"></script>
+</body>
+</html>
