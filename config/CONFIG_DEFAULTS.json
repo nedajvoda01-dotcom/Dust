@@ -435,5 +435,32 @@
     "_comment_ledge_thresh": "Minimum height drop (simulation units) to classify as a ledge.",
     "dev_visualise": false,
     "_comment_dev_vis": "Dev mode: log reflex state and probe rays each tick (no UI)."
+  },
+
+  "anim": {
+    "base_stride": 0.8,
+    "_comment_stride": "Base stride length in simulation units. Scaled by AnimParamFrame.stride_length.",
+    "base_cadence": 1.0,
+    "_comment_cadence": "Base gait cadence (cycles per game-second). Scaled by AnimParamFrame.cadence.",
+    "step_height_base": 0.15,
+    "_comment_step_h": "Base foot-lift height (simulation units) during swing phase.",
+    "stance_width_base": 0.15,
+    "_comment_stance_w": "Lateral distance from centre-line to each foot (simulation units).",
+    "foot_align_strength": 0.5,
+    "_comment_foot_align": "Blend weight [0..1] for aligning foot to ground normal (0=ignore normal, 1=full align).",
+    "ik_iterations": 2,
+    "_comment_ik": "Maximum iterations for 2-bone IK solver. 1-2 is sufficient for FK-seeded solutions.",
+    "style_exaggeration_max": 0.3,
+    "_comment_exag": "Maximum fractional exaggeration of arm/torso motion at full effort.",
+    "squash_stretch_max": 0.07,
+    "_comment_squash": "Maximum pelvis scale deviation for squash/stretch (e.g. 0.07 = ±7%).",
+    "timing_var_strength": 0.06,
+    "_comment_timing_var": "Maximum fractional cadence variation added by seeded per-bucket noise.",
+    "micro_jitter_strength": 0.02,
+    "_comment_jitter": "Peak angular micro-jitter (radians) applied to head at max micro_jitter intensity.",
+    "brace_hand_preference_bias": 0.5,
+    "_comment_hand_bias": "Probability [0..1] of choosing the left hand for brace. 0.5 = equal chance.",
+    "layer_blend_curves": "ease_in_out",
+    "_comment_blend": "Easing function used for action-layer blend weights. Currently: ease_in_out."
   }
 }
