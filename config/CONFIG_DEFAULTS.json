@@ -596,5 +596,32 @@
 
     "limiter_release": 0.2,
     "_comment_limiter_release": "Master limiter release time in seconds."
+  },
+
+  "save": {
+    "autosave_minutes": 2.0,
+    "_comment_autosave": "Interval (simulated minutes) between automatic saves.",
+    "on_geo_impact": true,
+    "_comment_geo_impact": "When true, an extra save is triggered after each major geo event.",
+    "schema_version": 1,
+    "_comment_schema": "Save-file schema version; increment when save format changes."
+  },
+
+  "boot": {
+    "spawn_attempts": 64,
+    "_comment_spawn_attempts": "Number of candidate spawn points evaluated; more → better spawn, slower boot.",
+    "spawn_slope_max_deg": 25.0,
+    "_comment_spawn_slope": "Spawn candidates with slope above this (degrees) are penalised.",
+    "spawn_stability_min": 0.3,
+    "_comment_spawn_stability": "Spawn candidates with geological stability below this are penalised.",
+    "spawn_avoid_storm_threshold": 0.8,
+    "_comment_spawn_storm": "Visibility threshold below which a spawning location is penalised.",
+    "warmup_seconds": 10,
+    "_comment_warmup": "Simulated seconds of climate warm-up on first boot (no saved snapshot)."
+  },
+
+  "dev": {
+    "headless_mode": false,
+    "_comment_headless": "When true, disables all rendering and audio (for CI / smoke tests)."
   }
 }
