@@ -44,10 +44,14 @@ def _clamp(v: float, lo: float, hi: float) -> float:
 # ---------------------------------------------------------------------------
 
 class CharacterState(Enum):
-    GROUNDED   = auto()   # on surface, can move normally
-    AIRBORNE   = auto()   # not touching ground
-    SLIDING    = auto()   # on too-steep slope or too-slippery surface
-    STUMBLING  = auto()   # destabilised by geo-event or gust
+    GROUNDED           = auto()   # on surface, can move normally
+    AIRBORNE           = auto()   # not touching ground
+    SLIDING            = auto()   # on too-steep slope or too-slippery surface
+    STUMBLING          = auto()   # destabilised by geo-event or gust
+    BRACED             = auto()   # leaning on a surface for support
+    CROUCHED           = auto()   # crouching (e.g. against gust)
+    HANGING            = auto()   # hanging from a ledge after grab
+    FALLING_CONTROLLED = auto()   # controlled fall / unrecoverable slide
 
 
 # ---------------------------------------------------------------------------
@@ -209,6 +213,7 @@ class CharacterPhysicalController:
         config=None,
         ground_sampler: Optional[IGroundSampler] = None,
         env_sampler:    Optional[EnvironmentSampler] = None,
+        reflex_system=None,
     ) -> None:
         self._planet_r = planet_radius
 
@@ -246,6 +251,7 @@ class CharacterPhysicalController:
         # --- Sub-systems ---
         self._ground    = ground_sampler or IGroundSampler(planet_radius)
         self._env       = env_sampler    or EnvironmentSampler()
+        self._reflex    = reflex_system  # Optional[ReflexSystem]
 
         # --- Stumble timer ---
         self._stumble_remaining: float = 0.0
@@ -318,6 +324,10 @@ class CharacterPhysicalController:
         if self.state == CharacterState.STUMBLING:
             self._apply_stumble_drift(up, dt)
 
+        # 9b. ReflexSystem (between intent and final velocity integration)
+        if self._reflex is not None:
+            self._reflex.update(self, dt, wind, mu, gnd)
+
         # 10. Speed cap
         self._cap_speed(up)
 
@@ -339,12 +349,17 @@ class CharacterPhysicalController:
             "mu":           mu,
             "slope_angle":  self._slope_angle(gnd, up),
             "speed":        self.velocity.length(),
+            "balance":      self._reflex.balance_model.balance if self._reflex else 1.0,
         }
 
     @property
     def debug_info(self) -> dict:
         """Gizmo / log data filled after each update()."""
         return dict(self._debug)
+
+    def set_ground_sampler(self, sampler: IGroundSampler) -> None:
+        """Replace the ground sampler (e.g., to switch terrain mid-simulation)."""
+        self._ground = sampler
 
     # ------------------------------------------------------------------
     # Private: state transitions
