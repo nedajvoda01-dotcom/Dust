@@ -123,7 +123,7 @@ class TestEventPhasesOrder(unittest.TestCase):
 
     def test_post_after_impact(self):
         evt = self._make_event(t0=100.0, pre_dur=5.0, post_dur=20.0)
-        # At IMPACT time and just after
+        # IMPACT is instantaneous: at exactly impact_time the phase is already POST
         self.assertEqual(evt.phase_at(105.0), SubsurfaceHazardPhase.POST)
         self.assertEqual(evt.phase_at(124.9), SubsurfaceHazardPhase.POST)
 
@@ -440,8 +440,8 @@ class TestRateLimits(unittest.TestCase):
         player_pos = Vec3(PLANET_RADIUS, 0.0, 0.0)
 
         # Exhaust the budget
-        for _ in range(20):
-            sys_.tick(dt=10.0, game_time=float(_ * 10), player_positions=[player_pos])
+        for i in range(20):
+            sys_.tick(dt=10.0, game_time=float(i * 10), player_positions=[player_pos])
 
         # Advance past 1 hour boundary
         evts_after = sys_.tick(

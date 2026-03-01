@@ -203,7 +203,16 @@ class CaveDustField:
     peak_density:  float    # max visibility reduction [0..1]
 
     def density_at(self, game_time: float, dist: float = 0.0) -> float:
-        """Current dust density [0..1] at *dist* metres from origin at *game_time*."""
+        """Current dust density [0..1] at *game_time*.
+
+        Parameters
+        ----------
+        game_time : absolute game time in seconds.
+        dist      : metres from the dust origin.  When > 0 the density is zero
+                    until the propagating front (age × speed) reaches this
+                    distance, then follows exponential decay.  Defaults to 0
+                    (origin / local zone query).
+        """
         age  = game_time - self.start_time
         if age < 0.0:
             return 0.0
@@ -284,8 +293,6 @@ class SubsurfaceHazardEvent:
         return self.impact_time + self.post_dur
 
     def phase_at(self, game_time: float) -> SubsurfaceHazardPhase:
-        if game_time < self.t0:
-            return SubsurfaceHazardPhase.PRE
         if game_time < self.impact_time:
             return SubsurfaceHazardPhase.PRE
         if game_time < self.end_time:
