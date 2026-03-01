@@ -23,6 +23,7 @@ from typing import Optional
 
 from src.math.Vec3 import Vec3
 from src.render.MeshBuilder import Mesh
+from src.planet.PlanetHeightProvider import HEIGHT_SCALE as _HEIGHT_SCALE
 
 
 # ---------------------------------------------------------------------------
@@ -153,8 +154,6 @@ _C_MID    = (0.66, 0.50, 0.38)   # dusty red soil
 _C_HIGH   = (0.76, 0.62, 0.48)   # pale ochre terrace
 _C_PEAK   = (0.88, 0.84, 0.80)   # bright highland / dust-covered ridge
 
-HEIGHT_SCALE_FOR_COLOR: float = 40.0   # matches PlanetHeightProvider.HEIGHT_SCALE
-
 
 def _lerp_color(a: tuple, b: tuple, t: float) -> tuple:
     t = max(0.0, min(1.0, t))
@@ -167,7 +166,7 @@ def _lerp_color(a: tuple, b: tuple, t: float) -> tuple:
 
 def _height_color(h: float) -> tuple:
     """Map height offset to an RGB colour triple (no textures)."""
-    t = (h / HEIGHT_SCALE_FOR_COLOR + 1.0) * 0.5   # 0 .. 1
+    t = (h / _HEIGHT_SCALE + 1.0) * 0.5   # 0 .. 1
 
     if t < 0.25:
         return _lerp_color(_C_LOW, _C_MID, t / 0.25)

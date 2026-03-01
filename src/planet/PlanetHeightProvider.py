@@ -31,7 +31,7 @@ def _hash3i(a: int, b: int, c: int) -> int:
 
 def _h3f(a: int, b: int, c: int) -> float:
     """Float in [0, 1) from integer triple."""
-    return _hash3i(a & 0xFF, b & 0xFF, c & 0xFF) / 2_147_483_647.0
+    return _hash3i(a & 0xFF, b & 0xFF, c & 0xFF) / 2_147_483_648.0
 
 
 def _s5(t: float) -> float:
@@ -169,7 +169,10 @@ class PlanetHeightProvider:
         self._seed: int = seed
 
         # Noise-domain offset isolates seeds from each other.
-        rng = random.Random(seed ^ 0x5A5A_5A5A)
+        # XOR with a decorrelated constant so different seeds produce
+        # noise domains that are far apart in the lattice.
+        _SEED_SCATTER = 0x5A5A_5A5A
+        rng = random.Random(seed ^ _SEED_SCATTER)
         self._ox: float = rng.uniform(-500.0, 500.0)
         self._oy: float = rng.uniform(-500.0, 500.0)
         self._oz: float = rng.uniform(-500.0, 500.0)

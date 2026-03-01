@@ -35,7 +35,7 @@ class _FlatHeightProvider:
 
     seed = 0
 
-    def sample_height(self, _unit_dir: Vec3) -> float:  # noqa: D401
+    def sample_height(self, _unit_dir: Vec3) -> float:
         return 0.0
 
     def sample_normal_approx(self, unit_dir: Vec3) -> Vec3:
