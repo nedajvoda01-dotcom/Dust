@@ -94,13 +94,15 @@ class LocomotionModifiers:
 @dataclass
 class AnimParamFrame:
     """Per-tick animation parameters derived from environment."""
-    stride_length: float = 1.0
-    cadence:       float = 1.0
-    arm_swing_amp: float = 1.0
-    torso_twist:   float = 0.0
-    head_bob:      float = 1.0
-    micro_jitter:  float = 0.0
-    effort:        float = 0.0
+    stride_length:     float = 1.0
+    cadence:           float = 1.0
+    arm_swing_amp:     float = 1.0
+    torso_twist:       float = 0.0
+    head_bob:          float = 1.0
+    micro_jitter:      float = 0.0
+    effort:            float = 0.0
+    lean:              float = 0.0   # upper-body lean magnitude [0..1] (wind/slope)
+    step_height_scale: float = 1.0   # foot-lift scale (>1 = lift feet higher)
 
 
 # ---------------------------------------------------------------------------
@@ -628,12 +630,14 @@ class CharacterEnvironmentIntegration:
         jitter_k    = ctx.storm_intensity * 0.6 + (1.0 - ctx.ground_stability) * 0.3
 
         frame = AnimParamFrame(
-            stride_length = _clamp(base_stride + stride_var, 0.1, 1.5),
-            cadence       = _clamp(base_cadence + cadence_var, 0.3, 1.5),
-            arm_swing_amp = _clamp(mods.arm_support_bias + 0.3 + rng.value(2) * var, 0.1, 1.5),
-            torso_twist   = mods.upper_body_lean * 0.5 + rng.signed(3) * var * 0.3,
-            head_bob      = _clamp(base_cadence * 0.8 + rng.signed(4) * var * 0.2, 0.1, 1.2),
-            micro_jitter  = _clamp(jitter_k + rng.value(5) * var, 0.0, 1.0),
-            effort        = base_effort,
+            stride_length     = _clamp(base_stride + stride_var, 0.1, 1.5),
+            cadence           = _clamp(base_cadence + cadence_var, 0.3, 1.5),
+            arm_swing_amp     = _clamp(mods.arm_support_bias + 0.3 + rng.value(2) * var, 0.1, 1.5),
+            torso_twist       = mods.upper_body_lean * 0.5 + rng.signed(3) * var * 0.3,
+            head_bob          = _clamp(base_cadence * 0.8 + rng.signed(4) * var * 0.2, 0.1, 1.2),
+            micro_jitter      = _clamp(jitter_k + rng.value(5) * var, 0.0, 1.0),
+            effort            = base_effort,
+            lean              = _clamp(mods.upper_body_lean, 0.0, 1.0),
+            step_height_scale = _clamp(mods.step_height_scale, 0.5, 2.0),
         )
         self._anim_frame = frame
