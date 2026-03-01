@@ -248,6 +248,13 @@ class CharacterPhysicalController:
         # Ground probe distance (small gap so we detect ground before embedding)
         self._probe_dist: float = self.capsule_radius + 0.3
 
+        # --- Environment modifier scales (set by CharacterEnvironmentIntegration) ---
+        self._speed_scale:              float = 1.0
+        self._accel_scale:              float = 1.0
+        self._turn_responsiveness:      float = 1.0
+        self._effective_friction_scale: float = 1.0
+        self._wind_drag_scale:          float = 1.0
+
         # --- Sub-systems ---
         self._ground    = ground_sampler or IGroundSampler(planet_radius)
         self._env       = env_sampler    or EnvironmentSampler()
@@ -361,6 +368,28 @@ class CharacterPhysicalController:
         """Replace the ground sampler (e.g., to switch terrain mid-simulation)."""
         self._ground = sampler
 
+    # Environment modifier setters (called by CharacterEnvironmentIntegration)
+
+    def set_speed_scale(self, x: float) -> None:
+        """Set speed scale [0..1] from environment (wind, dust, slope, etc.)."""
+        self._speed_scale = _clamp(x, 0.0, 1.0)
+
+    def set_accel_scale(self, x: float) -> None:
+        """Set acceleration scale [0..1] from environment."""
+        self._accel_scale = _clamp(x, 0.0, 1.0)
+
+    def set_effective_friction_scale(self, x: float) -> None:
+        """Set friction scale [0..2] from environment (ice lowers, rough raises)."""
+        self._effective_friction_scale = _clamp(x, 0.0, 2.0)
+
+    def set_wind_drag_scale(self, x: float) -> None:
+        """Set wind drag scale [0..2] — storm/dust boosts drag."""
+        self._wind_drag_scale = _clamp(x, 0.0, 2.0)
+
+    def set_turn_responsiveness(self, x: float) -> None:
+        """Set turn responsiveness [0..1] — whiteout reduces agility."""
+        self._turn_responsiveness = _clamp(x, 0.0, 1.0)
+
     # ------------------------------------------------------------------
     # Private: state transitions
     # ------------------------------------------------------------------
@@ -423,7 +452,7 @@ class CharacterPhysicalController:
     def _apply_wind(self, wind: Vec3, dust: float, dt: float) -> None:
         """Apply wind force scaled by dust density (heavier dust storms)."""
         dust_factor = 1.0 + dust * 1.5
-        force       = wind * (self.wind_drag * dust_factor)
+        force       = wind * (self.wind_drag * dust_factor * self._wind_drag_scale)
         self.velocity = self.velocity + (force / self.mass) * dt
 
     # ------------------------------------------------------------------
@@ -510,14 +539,15 @@ class CharacterPhysicalController:
         if not desired_dir.is_near_zero() and desired_speed > 0.0:
             tang_dir = _project_tangent(desired_dir, up)
             if not tang_dir.is_near_zero():
-                v_desired = tang_dir * min(desired_speed, self.max_speed)
+                eff_speed = min(desired_speed, self.max_speed) * self._speed_scale
+                v_desired = tang_dir * eff_speed
                 # Tangent component of current velocity
                 v_tang = _project_tangent(self.velocity, up)
                 # Acceleration toward desired
                 dv = v_desired - v_tang
                 dv_mag = dv.length()
                 if dv_mag > 1e-6:
-                    accel_step = min(self.accel * dt, dv_mag)
+                    accel_step = min(self.accel * self._accel_scale * dt, dv_mag)
                     self.velocity = self.velocity + dv.normalized() * accel_step
 
         # Friction
@@ -564,12 +594,14 @@ class CharacterPhysicalController:
         tang_dir = _project_tangent(desired_dir, up)
         if tang_dir.is_near_zero():
             return
-        v_desired = tang_dir * min(desired_speed, self.max_speed)
+        eff_speed = min(desired_speed, self.max_speed) * self._speed_scale
+        v_desired = tang_dir * eff_speed
         v_tang    = _project_tangent(self.velocity, up)
         dv        = v_desired - v_tang
         dv_mag    = dv.length()
         if dv_mag > 1e-6:
-            accel_step = min(self.accel * factor * dt, dv_mag)
+            accel_step = min(self.accel * self._accel_scale * factor
+                             * self._turn_responsiveness * dt, dv_mag)
             self.velocity = self.velocity + dv.normalized() * accel_step
 
     def _apply_tangent_friction(
@@ -580,8 +612,8 @@ class CharacterPhysicalController:
         dt:        float,
     ) -> None:
         """Reduce tangential velocity by friction and viscosity."""
-        # Effective friction = base * material_mu * (1 - viscosity_drag)
-        friction_k = self.ground_friction * mu
+        # Effective friction = base * material_mu * env_scale * (1 - viscosity_drag)
+        friction_k = self.ground_friction * mu * self._effective_friction_scale
         viscosity_k = viscosity * 2.0   # viscosity adds extra drag
         total_drag  = _clamp((friction_k + viscosity_k) * dt, 0.0, 1.0)
         v_tang = _project_tangent(self.velocity, up)
@@ -608,12 +640,13 @@ class CharacterPhysicalController:
     # ------------------------------------------------------------------
 
     def _cap_speed(self, up: Vec3) -> None:
-        """Clamp tangential speed to max_speed; leave vertical component."""
+        """Clamp tangential speed to max_speed * speed_scale; leave vertical component."""
         v_tang   = _project_tangent(self.velocity, up)
         v_normal = up * self.velocity.dot(up)
         tang_mag = v_tang.length()
-        if tang_mag > self.max_speed:
-            v_tang = v_tang * (self.max_speed / tang_mag)
+        cap = self.max_speed * self._speed_scale
+        if tang_mag > cap:
+            v_tang = v_tang * (cap / tang_mag)
         self.velocity = v_normal + v_tang
 
     # ------------------------------------------------------------------

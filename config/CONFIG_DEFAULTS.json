@@ -351,6 +351,29 @@
     "_comment_dev_carve_r": "Radius of the dev-mode test carve sphere (simulation units)."
   },
 
+  "env": {
+    "wind_lean_max": 20.0,
+    "_comment_wind_lean_max": "Wind speed (m/s) at which upper-body lean reaches maximum.",
+    "headwind_speed_k": 0.04,
+    "_comment_headwind_speed_k": "Fraction of speed lost per m/s of headwind.",
+    "whiteout_turn_k": 0.6,
+    "_comment_whiteout_turn_k": "Multiplier applied to turn_responsiveness at full whiteout.",
+    "whiteout_stride_scale": 0.5,
+    "_comment_whiteout_stride_scale": "Minimum stride scale at full whiteout visibility.",
+    "ice_friction_scale_min": 0.15,
+    "_comment_ice_friction_min": "Effective-friction scale at maximum ice coverage.",
+    "dust_viscosity_k": 0.5,
+    "_comment_dust_viscosity_k": "Fraction by which deep dust reduces speed.",
+    "slope_speed_k": 0.6,
+    "_comment_slope_speed_k": "Speed scale reduction per radian of slope angle.",
+    "stability_balance_k": 0.5,
+    "_comment_stability_balance_k": "Balance-loss scale increase when ground_stability is 0.",
+    "variation_window_sec": 2.0,
+    "_comment_variation_window": "RNG bucket size (seconds) — micro-variations change at most once per window.",
+    "variation_strength": 0.08,
+    "_comment_variation_strength": "Max fractional micro-variation added to stride/cadence."
+  },
+
   "reflex": {
     "balance_recovery_rate": 0.3,
     "_comment_recovery": "Balance recovery speed per second while grounded, slow, and braced/crouched.",
