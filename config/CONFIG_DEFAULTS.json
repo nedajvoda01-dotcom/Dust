@@ -541,5 +541,60 @@
     "_comment_hand_bias": "Probability [0..1] of choosing the left hand for brace. 0.5 = equal chance.",
     "layer_blend_curves": "ease_in_out",
     "_comment_blend": "Easing function used for action-layer blend weights. Currently: ease_in_out."
+  },
+
+  "audio": {
+    "_comment": "Stage 19 ProceduralAudioSystem — all synthesis, no external assets.",
+
+    "master_gain": 0.9,
+    "_comment_master": "Global output amplitude multiplier [0..1].",
+
+    "wind_gain": 1.0,
+    "_comment_wind_gain": "Wind channel output gain.",
+
+    "storm_gain": 1.2,
+    "_comment_storm_gain": "Storm/whiteout channel output gain.",
+
+    "foot_gain": 1.0,
+    "_comment_foot_gain": "Footsteps channel output gain.",
+
+    "suit_gain": 0.5,
+    "_comment_suit_gain": "Suit (breath/fabric/servo) channel output gain. Low by design — suit is subtle.",
+
+    "geo_gain": 1.0,
+    "_comment_geo_gain": "Shared geo channel gain multiplier.",
+
+    "wind_whistle_enable": true,
+    "_comment_whistle_enable": "Enable narrow-band wind whistle layer in strong winds.",
+
+    "wind_whistle_strength": 0.3,
+    "_comment_whistle_strength": "Amplitude multiplier for wind whistle layer [0..1].",
+
+    "storm_duck_strength": 0.7,
+    "_comment_storm_duck": "How strongly the Storm channel ducks Footsteps and Suit [0=no duck, 1=full silence].",
+
+    "foot_dust_tail_ms": 120.0,
+    "_comment_foot_dust_tail": "Noise tail length (ms) for a dust-surface footstep.",
+
+    "foot_rock_click_strength": 1.4,
+    "_comment_foot_rock_click": "Amplitude multiplier for the short high-frequency click on rock surfaces.",
+
+    "foot_ice_squeal_strength": 0.8,
+    "_comment_foot_ice_squeal": "Amplitude of the ice-squeal band-pass layer on ice footsteps.",
+
+    "geo_pre_rumble_gain": 0.5,
+    "_comment_geo_pre_rumble": "Gain for the PRE-phase infrasound rumble.",
+
+    "geo_pre_rumble_release_s": 5.0,
+    "_comment_geo_pre_release": "Release time (seconds) for the PRE-phase rumble envelope.",
+
+    "geo_impact_gain": 1.0,
+    "_comment_geo_impact": "Gain for the IMPACT-phase thump and debris bursts.",
+
+    "limiter_threshold": 0.95,
+    "_comment_limiter_threshold": "Master limiter kick-in level [0..1]. Values above this are compressed.",
+
+    "limiter_release": 0.2,
+    "_comment_limiter_release": "Master limiter release time in seconds."
   }
 }
