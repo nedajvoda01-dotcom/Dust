@@ -86,6 +86,28 @@
     "void_risk_threshold": 0.68
   },
 
+  "tectonic": {
+    "plate_count": 18,
+    "_comment_plate_count": "Number of tectonic plates. Range: 12–30.",
+    "stress_rate": 0.01,
+    "_comment_stress_rate": "Rate at which stress accumulates per second in boundary zones.",
+    "fracture_rate": 0.02,
+    "_comment_fracture_rate": "Rate at which fracture accumulates from stress per second.",
+    "field_width": 128,
+    "_comment_field": "Equirectangular field resolution (width × height). Coarse is intentional.",
+    "field_height": 64,
+    "boundary_threshold_rad": 0.08,
+    "_comment_boundary": "Angular distance (radians) within which a point is considered a boundary zone.",
+    "ridge_amplitude": 0.55,
+    "_comment_ridge": "Height multiplier for convergent ridges (fraction of HEIGHT_SCALE).",
+    "rift_amplitude": 0.40,
+    "_comment_rift_amp": "Depth multiplier for divergent rift valleys.",
+    "canyon_amplitude": 0.30,
+    "_comment_canyon": "Depth multiplier for transform canyons.",
+    "dev_visualise": false,
+    "_comment_dev": "Dev mode: enable plate/boundary/stress colour overlay (dev only)."
+  },
+
   "character": {
     "walk_speed_units_per_s": 1.8,
     "slide_friction_threshold": 0.15,

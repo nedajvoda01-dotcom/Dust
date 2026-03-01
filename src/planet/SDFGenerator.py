@@ -12,6 +12,10 @@ And the SDF value is:
 
 This guarantees d=0 coincides exactly with the heightfield surface.
 Positive d → air (above surface), negative d → rock (below surface).
+
+Material channels (hardness, fracture, porosity) are populated from the
+optional GeoFieldSampler when provided, enabling SDF-based systems to
+know about geological weakness zones and rift porosity.
 """
 from __future__ import annotations
 
@@ -30,6 +34,7 @@ def generate_chunk(
     voxel_depth: float,
     planet_radius: float,
     height_provider,
+    geo_sampler=None,
 ) -> SDFChunk:
     """
     Build and return a fully populated SDFChunk for *coord*.
@@ -41,6 +46,9 @@ def generate_chunk(
     voxel_depth      : metres per radial voxel step
     planet_radius    : base planet radius in simulation units
     height_provider  : object with ``sample_height(unit_dir) -> float``
+    geo_sampler      : optional GeoFieldSampler; when supplied the
+                       hardness/fracture/porosity channels are populated
+                       from the tectonic field
     """
     R = resolution
     half_depth = (R // 2) * voxel_depth
@@ -55,6 +63,9 @@ def generate_chunk(
     positions      = [(0.0, 0.0, 0.0)] * n
     distance_field = [0.0] * n
     material_field = [MATERIAL_AIR] * n
+    hardness_field = [1.0] * n
+    fracture_field = [0.0] * n
+    porosity_field = [0.0] * n
 
     for k in range(R):
         radial_offset = top_offset - k * voxel_depth
@@ -79,6 +90,17 @@ def generate_chunk(
                     MATERIAL_AIR if radial_offset >= 0.0 else MATERIAL_ROCK
                 )
 
+                if geo_sampler is not None:
+                    sample = geo_sampler.sample(direction)
+                    hardness_field[idx] = sample.hardness
+                    fracture_field[idx] = sample.fracture
+                    # Porosity is elevated under rifts (divergent boundaries)
+                    from src.planet.TectonicPlatesSystem import BoundaryType
+                    if sample.boundary_type == BoundaryType.DIVERGENT:
+                        porosity_field[idx] = min(1.0, sample.boundary_strength * 0.8)
+                    else:
+                        porosity_field[idx] = 0.0
+
     # Approximate horizontal voxel size from tile angular width
     tile_center_u = (u_min + u_max) * 0.5
     tile_center_v = (v_min + v_max) * 0.5
@@ -97,4 +119,7 @@ def generate_chunk(
         positions      = positions,
         distance_field = distance_field,
         material_field = material_field,
+        hardness_field = hardness_field,
+        fracture_field = fracture_field,
+        porosity_field = porosity_field,
     )
