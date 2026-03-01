@@ -123,8 +123,7 @@ def generate_geo_features(
         if rng.random() < 0.3:
             offset_angle = rng.uniform(-0.05, 0.05)
             # Slightly offset anchor along axis
-            import math as _m
-            oa = anchor + axis * _m.sin(offset_angle)
+            oa = anchor + axis * math.sin(offset_angle)
             oa_len = oa.length()
             if oa_len > 1e-9:
                 oa = oa * (1.0 / oa_len)
