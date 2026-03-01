@@ -74,6 +74,23 @@
     globalDust: 0,
   };
 
+  // ─── PLL time-sync state ──────────────────────────────────────────────
+  // Proportional-Integral corrector keeps local simTime tracking the server
+  // without sudden jumps.
+  const PLL_KP             = 0.05;   // proportional gain (per-tick nudge)
+  const PLL_KI             = 0.001;  // integral gain (slow drift correction)
+  const PLL_INTEGRAL_CLAMP = 0.05;   // max |timeRateCorrection| to prevent wind-up
+  const HARD_RESYNC_THRESHOLD = 5.0; // seconds — hard-reset if error exceeds this
+  let _pllTimeOffset        = 0;  // accumulated offset correction
+  let _pllRateCorrection    = 0;  // integral rate correction
+
+  // ─── Interpolation / reconnect state ─────────────────────────────────
+  const INTERP_DELAY_MS = 200;    // render remote players this far behind "now"
+  const MAX_EXTRAP_MS   = 150;    // extrapolate at most this long before freezing
+  let _lastSeenEpoch    = 0;
+  let _lastEventId      = -1;     // highest eventId we have applied
+  let _isFirstConnect   = true;
+
   // Local player
   const player = {
     id:    null,
@@ -82,8 +99,10 @@
     flags: 0,
   };
 
-  // Remote players  id → { pos, vel, flags, lastSeen }
+  // Remote players  id → { snapshots: [{t, pos, vel}], flags, lastSeen }
+  // snapshots is kept sorted by t ascending, capped at ~600 ms history.
   const remotePlayers = new Map();
+  const SNAP_HISTORY_MS = 600;
 
   // Geo events list (last 200)
   const geoEvents = [];
@@ -93,6 +112,7 @@
   let ws = null;
   let reconnectTimer = null;
   let sendInterval   = null;
+  let pingInterval   = null;
 
   const statusEl = document.getElementById("status");
 
@@ -108,10 +128,23 @@
 
     ws.onopen = () => {
       setStatus("connected", "connected");
+      // On reconnect (not first connect), ask for a delta resync
+      if (!_isFirstConnect) {
+        ws.send(JSON.stringify({
+          type:        "REJOIN_RESYNC",
+          lastSeenTick: _lastSeenEpoch,
+          lastEventId:  _lastEventId,
+          lastPatchId:  -1,
+        }));
+      }
+      _isFirstConnect = false;
       ws.send(JSON.stringify({ type: "JOIN", userAgent: navigator.userAgent }));
       // Send player state at 20 Hz
       clearInterval(sendInterval);
       sendInterval = setInterval(sendPlayerState, 50);
+      // Ping every 5 s to measure RTT
+      clearInterval(pingInterval);
+      pingInterval = setInterval(sendPing, 5000);
     };
 
     ws.onmessage = (ev) => {
@@ -124,6 +157,7 @@
     ws.onclose = () => {
       setStatus("disconnected", "disconnected — reconnecting…");
       clearInterval(sendInterval);
+      clearInterval(pingInterval);
       reconnectTimer = setTimeout(connect, 2000);
     };
 
@@ -142,6 +176,15 @@
     }));
   }
 
+  let _pingT = 0;
+  let _rtt   = 0;
+
+  function sendPing() {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    _pingT = performance.now();
+    ws.send(JSON.stringify({ type: "PING", t: _pingT }));
+  }
+
   // ─── Message handlers ─────────────────────────────────────────────────
   function handleMessage(msg) {
     switch (msg.type) {
@@ -153,41 +196,60 @@
         world.timeScale = msg.timeScale;
         world.spawnPos  = msg.spawnPos;
         world.anchor    = msg.anchor;
+        // Reset PLL on fresh sync
+        _pllTimeOffset     = 0;
+        _pllRateCorrection = 0;
         if (msg.geoEvents) {
           geoEvents.push(...msg.geoEvents);
           if (geoEvents.length > 200) geoEvents.splice(0, geoEvents.length - 200);
+          for (const ev of msg.geoEvents) {
+            if (ev.eventId > _lastEventId) _lastEventId = ev.eventId;
+          }
         }
         // Place local player at assigned spawn
         if (msg.spawnPos) player.pos = msg.spawnPos.slice();
         break;
 
-      case "WORLD_TICK":
-        // Smooth simTime toward server value
-        const delta = msg.simTime - world.simTime;
-        world.simTime   += delta * 0.1;   // soft correction
-        world.timeScale  = msg.timeScale;
-        world.epoch      = msg.epoch;
+      case "WORLD_TICK": {
+        // ── PLL: soft-track server simTime without jumps ──────────────
+        const err = msg.simTime - world.simTime;
+        if (Math.abs(err) > HARD_RESYNC_THRESHOLD) {
+          // Hard resync: snap immediately (should be rare)
+          world.simTime      = msg.simTime;
+          _pllTimeOffset     = 0;
+          _pllRateCorrection = 0;
+        } else {
+          // Proportional + integral correction
+          _pllTimeOffset     += err * PLL_KP;
+          _pllRateCorrection += err * PLL_KI;
+          // Clamp integral to prevent wind-up
+          _pllRateCorrection = Math.max(-PLL_INTEGRAL_CLAMP, Math.min(PLL_INTEGRAL_CLAMP, _pllRateCorrection));
+        }
+        world.timeScale = msg.timeScale;
+        world.epoch     = msg.epoch;
+        if (msg.epoch > _lastSeenEpoch) _lastSeenEpoch = msg.epoch;
         break;
+      }
 
-      case "PLAYERS":
-        const now = performance.now();
+      case "PLAYERS": {
+        const nowMs = performance.now();
         const seen = new Set();
         for (const p of msg.players) {
           seen.add(p.id);
           if (p.id === player.id) continue;  // skip self
-          const prev = remotePlayers.get(p.id);
-          if (prev) {
-            // Interpolation buffer: store two snapshots
-            prev.prev = { pos: prev.pos.slice(), t: prev.lastSeen };
-            prev.pos      = p.pos;
-            prev.vel      = p.vel;
-            prev.flags    = p.flags;
-            prev.lastSeen = now;
-          } else {
-            remotePlayers.set(p.id, {
-              pos: p.pos, vel: p.vel, flags: p.flags, lastSeen: now,
-              prev: null,
-            });
+          let entry = remotePlayers.get(p.id);
+          if (!entry) {
+            entry = { snapshots: [], flags: 0, lastSeen: nowMs };
+            remotePlayers.set(p.id, entry);
+          }
+          // Append snapshot (deduplicate by timestamp)
+          entry.snapshots.push({ t: nowMs, pos: p.pos, vel: p.vel });
+          entry.flags    = p.flags;
+          entry.lastSeen = nowMs;
+          // Trim history older than SNAP_HISTORY_MS
+          const cutoff = nowMs - SNAP_HISTORY_MS;
+          while (entry.snapshots.length > 2 && entry.snapshots[0].t < cutoff) {
+            entry.snapshots.shift();
           }
         }
         // Remove players not in the snapshot
@@ -195,17 +257,87 @@
           if (!seen.has(id)) remotePlayers.delete(id);
         }
         break;
+      }
 
       case "GEO_EVENT":
         geoEvents.push(msg);
         if (geoEvents.length > 200) geoEvents.shift();
+        if (msg.eventId > _lastEventId) _lastEventId = msg.eventId;
         break;
 
       case "CLIMATE_SNAP":
         world.storms     = msg.storms  || [];
         world.globalDust = msg.globalDust != null ? msg.globalDust : world.globalDust;
         break;
+
+      case "PONG":
+        if (msg.t != null) _rtt = performance.now() - msg.t;
+        break;
+
+      case "REJOIN_RESYNC":
+        // Apply catch-up events from delta resync
+        if (msg.catchupEvents) {
+          for (const ev of msg.catchupEvents) {
+            geoEvents.push(ev);
+            if (ev.eventId > _lastEventId) _lastEventId = ev.eventId;
+          }
+          if (geoEvents.length > 200) geoEvents.splice(0, geoEvents.length - 200);
+        }
+        if (msg.simTime != null) {
+          world.simTime      = msg.simTime;
+          _pllTimeOffset     = 0;
+          _pllRateCorrection = 0;
+        }
+        if (msg.epoch != null) world.epoch = msg.epoch;
+        break;
     }
+  }
+
+  // ─── Interpolate remote player position ──────────────────────────────
+  // Returns the interpolated (or extrapolated) position for a remote player
+  // at the render time (now - INTERP_DELAY_MS).  Returns null if insufficient
+  // data.
+  function getRemotePos(entry) {
+    const renderT = performance.now() - INTERP_DELAY_MS;
+    const snaps   = entry.snapshots;
+    if (snaps.length === 0) return null;
+
+    // Find the two snapshots that straddle renderT
+    let after = -1;
+    for (let i = 0; i < snaps.length; i++) {
+      if (snaps[i].t >= renderT) { after = i; break; }
+    }
+
+    if (after === -1) {
+      // renderT is past the latest snapshot — extrapolate from latest
+      const last = snaps[snaps.length - 1];
+      const dt   = (renderT - last.t) / 1000;  // s
+      if (dt > MAX_EXTRAP_MS / 1000) {
+        // Too stale — freeze at last known position
+        return last.pos.slice();
+      }
+      return [
+        last.pos[0] + last.vel[0] * dt,
+        last.pos[1] + last.vel[1] * dt,
+        last.pos[2] + last.vel[2] * dt,
+      ];
+    }
+
+    if (after === 0) {
+      // renderT is before the earliest snapshot — return first snapshot
+      return snaps[0].pos.slice();
+    }
+
+    // Interpolate between snaps[after-1] and snaps[after]
+    const a = snaps[after - 1];
+    const b = snaps[after];
+    const span = b.t - a.t;
+    const alpha = span < 1e-6 ? 0 : (renderT - a.t) / span;
+    return [
+      a.pos[0] + (b.pos[0] - a.pos[0]) * alpha,
+      a.pos[1] + (b.pos[1] - a.pos[1]) * alpha,
+      a.pos[2] + (b.pos[2] - a.pos[2]) * alpha,
+    ];
   }
 
   // ─── Simple input (WASD / arrow keys) ────────────────────────────────
@@ -332,9 +464,11 @@
 
     // Remote players
     for (const [id, rp] of remotePlayers) {
+      const rpos = getRemotePos(rp);
+      if (!rpos) continue;
       ctx.beginPath();
-      ctx.arc(cx + (rp.pos[0] - player.pos[0]) * 5,
-              cy - (rp.pos[2] - player.pos[2]) * 5, 6, 0, Math.PI * 2);
+      ctx.arc(cx + (rpos[0] - player.pos[0]) * 5,
+              cy - (rpos[2] - player.pos[2]) * 5, 6, 0, Math.PI * 2);
       ctx.fillStyle   = "#e05050";
       ctx.fill();
       ctx.strokeStyle = "#ff8080";
@@ -386,8 +520,10 @@
     lastFrame = now;
 
     updatePlayer(dt);
-    // Advance local simTime
-    world.simTime += dt * world.timeScale;
+    // Advance local simTime with PLL rate correction and decay the offset
+    const correction = _pllTimeOffset;
+    _pllTimeOffset  *= 0.9;  // exponential decay toward zero
+    world.simTime   += dt * world.timeScale * (1 + _pllRateCorrection) + correction;
     draw();
 
     requestAnimationFrame(loop);

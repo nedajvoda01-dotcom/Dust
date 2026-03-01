@@ -626,7 +626,7 @@
   },
 
   "net": {
-    "_comment": "Stage 21 — multiplayer networking layer.",
+    "_comment": "Stage 21/22 — multiplayer networking layer.",
     "enabled": false,
     "_comment_enabled": "Set true to start the WebSocket server on launch.",
     "ws_port": 8765,
@@ -635,12 +635,38 @@
     "_comment_tick_world": "WORLD_TICK broadcast rate (Hz).",
     "tick_hz_players": 20,
     "_comment_tick_players": "PLAYERS broadcast rate (Hz). Range: 10–20.",
+    "player_send_hz": 20,
+    "_comment_player_send_hz": "Maximum PLAYER_STATE messages accepted from a single client per second (rate limit).",
+    "player_broadcast_hz": 20,
+    "_comment_player_broadcast_hz": "Alias / override for tick_hz_players used by Stage 22 interest-management loop.",
+    "world_tick_hz": 5,
+    "_comment_world_tick_hz": "Alias / override for tick_hz_world.",
     "snapshot_interval_sec": 30,
     "_comment_snap": "Seconds between full CLIMATE_SNAP broadcasts.",
     "spawn_radius_m": 5.0,
     "_comment_spawn_r": "Scatter radius (m) around the shared spawn anchor.",
     "interest_sector_deg": 5.0,
-    "_comment_interest": "Angular sector (degrees) for interest-management filtering."
+    "_comment_interest": "Angular sector (degrees) for one interest sector tile.",
+    "sector_deg": 5.0,
+    "_comment_sector_deg": "Alias for interest_sector_deg used by Stage 22 interest management.",
+    "sector_radius": 2,
+    "_comment_sector_radius": "Number of neighbouring sector rings included in each client's subscription.",
+    "interp_delay_ms": 200,
+    "_comment_interp_delay_ms": "Client-side interpolation delay in milliseconds for remote players.",
+    "max_extrap_ms": 150,
+    "_comment_max_extrap_ms": "Maximum extrapolation window (ms) before remote player is frozen.",
+    "resync_hard_threshold_sec": 5.0,
+    "_comment_resync_hard": "simTime error (seconds) above which a hard time-resync is applied on the client."
+  },
+
+  "perf": {
+    "_comment": "Stage 22 — client-side CPU/GPU budget parameters.",
+    "mesh_budget_ms": 4.0,
+    "_comment_mesh_budget_ms": "Wall-time budget per frame for chunk meshing (milliseconds).",
+    "max_chunks_per_frame_remote_patches": 2,
+    "_comment_max_chunks_remote": "Maximum chunk re-meshes triggered by remote PATCH_BATCH per frame.",
+    "auto_quality_enable": true,
+    "_comment_auto_quality": "When true the client automatically reduces quality (vol steps, update divisor) on low FPS."
   },
 
   "world": {
