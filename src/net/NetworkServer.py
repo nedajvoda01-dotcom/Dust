@@ -72,6 +72,7 @@ from src.net.PlayerIdentity import make_player_key
 from src.net.PlayerRegistry import PlayerRegistry
 from src.net.SpawnAnchor import SpawnAnchor
 from src.net.WorldState import WorldState
+from src.ops.OpsLayer import OpsLayer
 
 _TAG        = "NetworkServer"
 _CLIENT_DIR = Path(__file__).parent.parent.parent / "client"
@@ -118,6 +119,10 @@ _DEFAULT_RESYNC_THRESHOLD = 5.0       # seconds of drift → hard resync
 _DEFAULT_PING_INTERVAL    = 10        # seconds between server→client pings
 _PLAYER_TIMEOUT_S         = 30.0
 _REJOIN_MAX_CATCHUP_EVENTS = 100      # if more, send full WORLD_SYNC
+
+# Stage 24 — ops HTTP endpoint (localhost-only)
+_OPS_HTTP_BIND            = "127.0.0.1"
+_OPS_COMPACT_INTERVAL_S   = 60.0     # how often to call maybe_compact()
 
 
 class NetworkServer:
@@ -261,6 +266,16 @@ class NetworkServer:
         self._running    = False
         self._last_snap  = 0.0
 
+        # Stage 24 — OpsLayer (health/metrics/compaction/reset/guards)
+        self._ops = OpsLayer(
+            world_state = self._world_state,
+            config      = config,
+            registry    = self._registry,
+            state_dir   = state_dir,
+            build_id    = self._build_id,
+        )
+        self._ops.set_reset_callback(self._on_world_reset)
+
     # ------------------------------------------------------------------
     # Lifecycle
     # ------------------------------------------------------------------
@@ -293,6 +308,7 @@ class NetworkServer:
             asyncio.create_task(self._player_bcast_loop(), name="player_bcast"),
             asyncio.create_task(self._sim_loop(),          name="sim"),
             asyncio.create_task(self._stale_loop(),        name="stale"),
+            asyncio.create_task(self._ops_loop(),          name="ops"),
         ]
         if self._ping_interval > 0:
             self._tasks.append(
@@ -426,6 +442,61 @@ class NetworkServer:
         # WebSocket upgrade — must come before any other check
         if clean_path.startswith(self._ws_path):
             return None
+
+        # Stage 24 — /health endpoint (read-only, any origin)
+        if clean_path == "/health":
+            body = json.dumps(self._ops.health(), indent=2).encode("utf-8")
+            return self._make_response(
+                200,
+                [
+                    ("Content-Type",   "application/json; charset=utf-8"),
+                    ("Content-Length", str(len(body))),
+                    ("Cache-Control",  "no-cache"),
+                ],
+                body,
+                request_headers,
+            )
+
+        # Stage 24 — /metrics endpoint (Prometheus-like text)
+        if clean_path == "/metrics":
+            body = self._ops.metrics().encode("utf-8")
+            return self._make_response(
+                200,
+                [
+                    ("Content-Type",   "text/plain; charset=utf-8"),
+                    ("Content-Length", str(len(body))),
+                    ("Cache-Control",  "no-cache"),
+                ],
+                body,
+                request_headers,
+            )
+
+        # Stage 24 — POST /ops/reset (localhost-only soft world reset)
+        if clean_path == "/ops/reset":
+            remote_ip = ""
+            try:
+                remote_ip = (request_headers.get("X-Forwarded-For") or
+                             request_headers.get("x-forwarded-for") or "")
+            except Exception:
+                pass
+            # Only allow when no forwarding header is present (direct loopback)
+            # or the header explicitly starts with a loopback address.
+            if remote_ip and not remote_ip.startswith(("127.", "::1")):
+                return self._make_response(
+                    403, [], b"Forbidden: ops endpoints are localhost-only",
+                    request_headers,
+                )
+            self._ops.trigger_reset()
+            body = b'{"status":"reset_scheduled"}'
+            return self._make_response(
+                200,
+                [
+                    ("Content-Type",   "application/json; charset=utf-8"),
+                    ("Content-Length", str(len(body))),
+                ],
+                body,
+                request_headers,
+            )
 
         # Root → index.html
         if clean_path in ("/", "/index.html"):
@@ -583,6 +654,7 @@ class NetworkServer:
             ws = ws_or_msg
 
         msg_type = msg.get("type", "")
+        self._ops.on_ws_msg_in()   # Stage 24 — count incoming messages
 
         # PING and REJOIN_RESYNC are control messages — exempt from rate limiting
         # so that reconnects and RTT measurements are never silently dropped.
@@ -671,6 +743,7 @@ class NetworkServer:
         for pid, ws in list(self._connections.items()):
             try:
                 await ws.send(msg)
+                self._ops.on_ws_msg_out()
             except Exception:
                 dead.append(pid)
         for pid in dead:
@@ -686,6 +759,7 @@ class NetworkServer:
         while self._running:
             await asyncio.sleep(interval)
             self._world_state.epoch += 1
+            self._ops.on_world_tick()           # Stage 24 — ops tick notification
             tick_msg = json.dumps({
                 "type":      "WORLD_TICK",
                 "simTime":   self._world_state.sim_time,
@@ -810,6 +884,8 @@ class NetworkServer:
 
         snap = {"storms": storms, "globalDust": float(global_dust)}
         self._world_state.save_climate_snapshot(snap)
+        self._ops.on_climate_tick()              # Stage 24
+        self._ops.on_snapshot()                  # Stage 24
         await self._broadcast(json.dumps({"type": "CLIMATE_SNAP", **snap}))
 
     # ------------------------------------------------------------------
@@ -872,3 +948,38 @@ class NetworkServer:
         if clock is not None:
             self._world_state.sim_time   = float(getattr(clock, "sim_time",   0.0))
             self._world_state.time_scale = float(getattr(clock, "time_scale", 1.0))
+
+    # ------------------------------------------------------------------
+    # Stage 24 — Ops loop & reset handler
+    # ------------------------------------------------------------------
+
+    async def _ops_loop(self) -> None:
+        """Periodic ops maintenance: check reset flag + maybe compact."""
+        while self._running:
+            await asyncio.sleep(_OPS_COMPACT_INTERVAL_S)
+            # Check and execute soft reset if scheduled
+            await self._ops.maybe_reset()
+            # Periodic compaction check
+            self._ops.maybe_compact()
+            # Storage-cap guard
+            self._ops.check_storage_cap()
+
+    async def _on_world_reset(
+        self,
+        new_world_id: str,
+        new_seed: int,
+        new_sim_time: float,
+    ) -> None:
+        """Broadcast SERVER_WORLD_RESET to all connected clients.
+
+        Called by OpsLayer after the world has been re-initialised.
+        Clients auto-reconnect and receive a fresh WORLD_SYNC.
+        """
+        Logger.info(_TAG, f"World reset → new worldId={new_world_id}")
+        msg = json.dumps({
+            "type":       "SERVER_WORLD_RESET",
+            "newWorldId": new_world_id,
+            "newSeed":    new_seed,
+            "newSimTime": new_sim_time,
+        })
+        await self._broadcast(msg)
