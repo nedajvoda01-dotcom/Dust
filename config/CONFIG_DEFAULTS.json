@@ -148,7 +148,52 @@
     "_comment_rift": "Rifts are rare. One every ~20 real-time hours expected globally.",
     "slope_instability_threshold": 0.72,
     "stress_threshold": 0.85,
-    "void_risk_threshold": 0.68
+    "void_risk_threshold": 0.68,
+
+    "events": {
+      "enabled": true,
+      "_comment_enabled": "Master switch for the GeoEventSystem.",
+      "rate_minor_per_hour": 20,
+      "_comment_rate_minor": "Maximum minor geo-events per simulated hour globally.",
+      "rate_major_per_hour": 2,
+      "_comment_rate_major": "Maximum major (destructive) geo-events per simulated hour.",
+      "min_distance_to_player": 0,
+      "_comment_min_dist": "Events closer than this to the player are suppressed (0 = no minimum).",
+      "max_distance_to_player": 99999,
+      "_comment_max_dist": "Events farther than this from the player are suppressed.",
+      "cooldown_minutes_per_tile": 5,
+      "_comment_cooldown": "Per-tile cooldown in game minutes after an event fires."
+    },
+
+    "fault": {
+      "length": 60,
+      "_comment_length": "Default fault crack length in simulation units.",
+      "width": 3,
+      "_comment_width": "Carve radius of each capsule segment.",
+      "depth": 10,
+      "_comment_depth": "How far radially into the rock the crack penetrates."
+    },
+
+    "landslide": {
+      "volume": 15,
+      "_comment_volume": "Carve radius at the slide source (proxy for volume).",
+      "runout_length": 50,
+      "_comment_runout": "Distance from source to deposit centre in simulation units."
+    },
+
+    "collapse": {
+      "radius": 18,
+      "_comment_radius": "Radius of the underground void chamber.",
+      "depth": 20,
+      "_comment_depth": "Depth below surface of the collapse chamber."
+    },
+
+    "event": {
+      "pre_seconds": 5,
+      "_comment_pre": "Duration of the PRE (precursor) phase in game seconds.",
+      "post_seconds": 30,
+      "_comment_post": "Duration of the POST (aftermath) phase in game seconds."
+    }
   },
 
   "tectonic": {
