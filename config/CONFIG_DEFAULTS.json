@@ -114,5 +114,24 @@
     "_comment_jobs": "Max tile meshes built per game frame (controls stutter budget).",
     "debug": false,
     "_comment_debug": "When true, logs active tile count and job-queue depth each frame."
+  },
+
+  "sdf": {
+    "lod": 4,
+    "_comment_lod": "LOD level of surface tiles used as SDF chunk anchors. Higher = finer tiles = more chunks near player.",
+    "resolution": 16,
+    "_comment_resolution": "Voxels per side per SDF chunk (e.g. 16 = 16x16x16). Must be even.",
+    "voxel_depth": 2.0,
+    "_comment_voxel_depth": "Radial metres per voxel. Controls vertical detail and chunk depth.",
+    "depth_layers_min": 0,
+    "_comment_depth_min": "Minimum depth_index to stream (0 = surface-straddling layer).",
+    "depth_layers_max": 0,
+    "_comment_depth_max": "Maximum depth_index to stream. Increase to stream deeper underground layers.",
+    "max_cached_chunks": 128,
+    "_comment_cache": "Maximum number of SDF chunks kept in memory simultaneously.",
+    "dev_carve_on_start": false,
+    "_comment_dev_carve": "Dev mode: carve a test cavity near spawn on startup (for development only).",
+    "dev_carve_radius": 20.0,
+    "_comment_dev_carve_r": "Radius of the dev-mode test carve sphere (simulation units)."
   }
 }
