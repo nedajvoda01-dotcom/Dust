@@ -29,6 +29,9 @@ from src.systems.GeoEventSystemStub import GeoEventSystemStub
 from src.systems.PixelStageStub import PixelStageStub
 from src.math.FloatingOrigin import FloatingOrigin
 
+from src.planet.PlanetHeightProvider import PlanetHeightProvider
+from src.planet.PlanetTileStreamer import PlanetTileStreamer
+
 _TAG = "EngineCore"
 
 
@@ -47,6 +50,10 @@ class EngineCore:
         self._climate = ClimateSystemStub()
         self._geo = GeoEventSystemStub()
         self._pixel = PixelStageStub()
+
+        # Planet LOD
+        self._height_provider: PlanetHeightProvider | None = None
+        self._tile_streamer: PlanetTileStreamer | None = None
 
         # Player state
         self._player: Entity | None = None
@@ -73,7 +80,7 @@ class EngineCore:
         self._walk_speed = float(self._config.get("character", "walk_speed_units_per_s", default=1.8))
 
         # Renderer
-        self._renderer = Renderer(1280, 720, "Dust — Stage 2: Planet Walk")
+        self._renderer = Renderer(1280, 720, "Dust — Stage 3: Planet LOD")
         self._renderer.init()
 
         # Camera
@@ -81,18 +88,33 @@ class EngineCore:
         surface_pos = Vec3(0.0, self._planet_radius + 1.8, 0.0)
         self._camera.local_position = surface_pos
 
-        # Meshes
-        sphere_mesh = MeshBuilder.uv_sphere(radius=self._planet_radius, stacks=24, slices=32)
-        self._renderer.register_mesh("planet", sphere_mesh)
+        # Height provider + tile streamer
+        lod_min    = int(self._config.get("lod", "min_lod",         default=0))
+        lod_max    = int(self._config.get("lod", "max_lod",         default=7))
+        tile_res   = int(self._config.get("lod", "tile_resolution", default=17))
+        max_tiles  = int(self._config.get("lod", "max_active_tiles",default=256))
+        lod_debug  = bool(self._config.get("lod", "debug",          default=False))
+        self._lod_jobs_per_frame = int(
+            self._config.get("lod", "max_jobs_per_frame", default=4)
+        )
+        self._height_provider = PlanetHeightProvider(seed)
+        self._tile_streamer = PlanetTileStreamer(
+            height_provider=self._height_provider,
+            planet_radius=self._planet_radius,
+            min_lod=lod_min,
+            max_lod=lod_max,
+            tile_res=tile_res,
+            max_active_tiles=max_tiles,
+            debug=lod_debug,
+        )
+        Logger.info(_TAG, f"LOD: min={lod_min} max={lod_max} res={tile_res}×{tile_res}")
+
+        # Debug indicator mesh (small sphere at player position)
         indicator_mesh = MeshBuilder.uv_sphere(radius=1.5, stacks=8, slices=12)
         self._renderer.register_mesh("indicator", indicator_mesh)
 
         # Scene
         self._scene = Scene("PlanetWalkTest")
-
-        planet_entity = Entity("Planet")
-        planet_entity.add_component(MeshComponent("planet"))
-        self._scene.add(planet_entity)
 
         self._player = Entity("Player")
         pc = PlayerComponent()
@@ -126,12 +148,19 @@ class EngineCore:
             if self._frame % 300 == 0:
                 pc = self._player.get_component(PlayerComponent) if self._player else None
                 fo = self._floating_origin
+                ts = self._tile_streamer
                 if pc and fo:
                     ll = PlanetMath.from_direction(pc.unit_dir)
+                    tiles_info = (
+                        f"tiles={ts.active_tile_count()} "
+                        f"queue={ts.job_queue_length()} "
+                        if ts else ""
+                    )
                     Logger.info(_TAG,
                         f"frame={self._frame} "
                         f"lat={math.degrees(ll.lat_rad):.2f}° "
                         f"lon={math.degrees(ll.lon_rad):.2f}° "
+                        f"{tiles_info}"
                         f"dt={self._time.real_dt*1000:.1f}ms"
                     )
 
@@ -191,14 +220,25 @@ class EngineCore:
             arc_per_frame = self._walk_speed / self._planet_radius * dt
             pc.unit_dir = PlanetMath.move_along_surface(pc.unit_dir, tangent, arc_per_frame)
 
-        # Keep camera on surface
-        surface_pos = pc.unit_dir * (self._planet_radius + 1.8)
+        # Sample height at player position for camera offset
+        h_player = (
+            self._height_provider.sample_height(pc.unit_dir)
+            if self._height_provider else 0.0
+        )
+        surface_pos = pc.unit_dir * (self._planet_radius + h_player + 1.8)
         self._camera.local_position = surface_pos
         self._floating_origin.set_local_position(surface_pos)
         self._floating_origin.update_geo()
 
         # Align camera up to planet up
         self._camera.align_to_surface(dt)
+
+        # Update LOD streamer
+        if self._tile_streamer:
+            self._tile_streamer.update(
+                pc.unit_dir,
+                max_jobs_per_frame=self._lod_jobs_per_frame,
+            )
 
         # Update system stubs
         gt = self._time.game_time_accum if self._time else 0.0
@@ -214,13 +254,19 @@ class EngineCore:
         self._renderer.begin_frame()
         self._renderer.set_camera(self._camera)
 
-        # Draw planet sphere
-        self._renderer.draw_mesh("planet", color=(0.55, 0.45, 0.35))
+        # Draw planet LOD tiles
+        if self._tile_streamer:
+            for mesh, _lod in self._tile_streamer.get_render_tiles():
+                self._renderer.draw_mesh_direct(mesh)
 
         # Draw debug indicators at player position
         pc = self._player.get_component(PlayerComponent)
         if pc:
-            pos = pc.unit_dir * (self._planet_radius + 1.8)
+            h_player = (
+                self._height_provider.sample_height(pc.unit_dir)
+                if self._height_provider else 0.0
+            )
+            pos = pc.unit_dir * (self._planet_radius + h_player + 1.8)
             up_vec = PlanetMath.up_at_position(pos)
             fwd_vec = self._camera.forward_tangent()
 
@@ -238,3 +284,4 @@ class EngineCore:
         if self._renderer:
             self._renderer.shutdown()
         Logger.info(_TAG, "Shutdown complete")
+
