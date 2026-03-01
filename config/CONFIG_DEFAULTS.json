@@ -270,6 +270,32 @@
     "_comment": "Default world seed. Any integer is valid. Determines all procedural generation."
   },
 
+  "time": {
+    "scale": 1.0,
+    "_comment_scale": "Game-seconds per real-second (WorldClock.time_scale). 1 = real-time. Dev only.",
+    "max_frame_dt_clamp": 0.1,
+    "_comment_clamp": "Maximum real-time dt per frame (seconds). Prevents spiral-of-death on stalled frames."
+  },
+
+  "sched": {
+    "insolation_hz": 2.0,
+    "_comment_insol_hz": "Update rate for InsolationField in Hz (calls per game-second). Range: 2–5.",
+    "climate_fixed_dt": 1.0,
+    "_comment_climate_dt": "Fixed time-step for ClimateSystem (game-seconds per step). Range: 0.5–2.0.",
+    "geology_tick_seconds": 5.0,
+    "_comment_geo_tick": "Fixed interval between TectonicPlatesSystem stress updates (game-seconds). Range: 2–10.",
+    "geoevent_tick_seconds": 10.0,
+    "_comment_geoevent_tick": "Fixed interval between GeoEventSystem risk ticks (game-seconds). Range: 5–20.",
+    "near_radius": 10000.0,
+    "_comment_near_radius": "Radius (simulation units) around the player treated as near-field for temporal LOD.",
+    "far_update_divisor": 4,
+    "_comment_far_div": "Far-field regions are refreshed every N climate ticks (1 = same as near-field).",
+    "job_budget_ms": 4.0,
+    "_comment_job_ms": "Wall-time budget per frame for the BudgetedJobQueue (milliseconds).",
+    "job_max_per_frame": 4,
+    "_comment_job_max": "Maximum number of queued jobs processed per frame."
+  },
+
   "lod": {
     "min_lod": 0,
     "_comment_min": "Minimum quadtree depth (0 = whole face as one tile).",
