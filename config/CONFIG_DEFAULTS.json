@@ -685,4 +685,38 @@
     "remote_lod_distance_2": 120.0,
     "_comment_remote_lod_2": "Distance (sim units) above which only the cheapest LOD rig is used."
   }
+,
+  "subsurface": {
+    "_comment": "Stage 26 — subsurface world: caves, lava tubes, chambers, collapses.",
+    "enable": true,
+    "_comment_enable": "Master toggle for the subsurface system.",
+    "seed_salt": 1554229278,
+    "_comment_seed_salt": "XOR salt applied to the global seed before cave generation.",
+    "shallow_prob": 0.6,
+    "_comment_shallow_prob": "Probability of generating a node in the shallow layer (0–200 m).",
+    "mid_prob": 0.3,
+    "_comment_mid_prob": "Probability of generating a node in the mid layer (200–1000 m).",
+    "deep_prob": 0.1,
+    "_comment_deep_prob": "Probability of generating a node in the deep layer (1–5 km).",
+    "tube_radius_min": 4.0,
+    "_comment_tube_radius_min": "Minimum lava tube / tunnel radius (metres).",
+    "tube_radius_max": 18.0,
+    "_comment_tube_radius_max": "Maximum lava tube / tunnel radius (metres).",
+    "chamber_size_min": 15.0,
+    "_comment_chamber_size_min": "Minimum chamber half-diameter (metres).",
+    "chamber_size_max": 80.0,
+    "_comment_chamber_size_max": "Maximum chamber half-diameter (metres).",
+    "fracture_thickness": 3.0,
+    "_comment_fracture_thickness": "Half-thickness of tectonic fracture caverns (metres).",
+    "portal_frequency": 0.03,
+    "_comment_portal_frequency": "Probability that a shallow cave node has a surface entry portal.",
+    "cave_fog_density": 0.8,
+    "_comment_cave_fog_density": "Fog density multiplier deep underground (0=none, 1=full).",
+    "cave_light_scatter": 0.6,
+    "_comment_cave_light_scatter": "Headlamp volumetric scatter in caves (0=off, 1=max diffuse).",
+    "cave_audio_reverb_mix": 0.7,
+    "_comment_cave_audio_reverb_mix": "Reverb wet mix for cave acoustics (0=dry, 1=full reverb).",
+    "collapse_event_rate_cap": 4,
+    "_comment_collapse_event_rate_cap": "Maximum server-authoritative collapse events per in-game hour."
+  }
 }
