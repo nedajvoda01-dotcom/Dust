@@ -163,6 +163,17 @@
     "_comment_debug": "When true, logs active tile count and job-queue depth each frame."
   },
 
+  "insolation": {
+    "field_width": 64,
+    "_comment_width": "Equirectangular grid width (longitude axis). 64 is adequate for climate; use 512 for high-fidelity renders.",
+    "field_height": 32,
+    "_comment_height": "Equirectangular grid height (latitude axis). Recommended aspect ratio 2:1.",
+    "cells_per_tick": null,
+    "_comment_cpt": "Cells updated per update() call. null = auto (field_width*field_height / 10). Tune to stay within frame budget.",
+    "update_interval_s": 1.0,
+    "_comment_interval": "Target interval (game seconds) between full-field passes. Informational only; actual rate depends on cells_per_tick and call frequency."
+  },
+
   "sdf": {
     "lod": 4,
     "_comment_lod": "LOD level of surface tiles used as SDF chunk anchors. Higher = finer tiles = more chunks near player.",
