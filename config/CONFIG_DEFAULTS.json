@@ -437,6 +437,85 @@
     "_comment_dev_vis": "Dev mode: log reflex state and probe rays each tick (no UI)."
   },
 
+  "cam": {
+    "mode_cooldown_sec": 5.0,
+    "_comment_cooldown": "Minimum seconds a camera mode must be held before switching again.",
+
+    "explore": {
+      "dist": 4.5,
+      "_comment_dist": "Camera boom distance (simulation units) in Exploration mode.",
+      "height": 1.8,
+      "_comment_height": "Camera height offset above character in Exploration mode.",
+      "fov": 62.0,
+      "_comment_fov": "Vertical field-of-view (degrees) in Exploration mode."
+    },
+
+    "struggle": {
+      "dist": 2.8,
+      "_comment_dist": "Camera boom distance in Struggle mode (closer to character).",
+      "height": 1.2,
+      "_comment_height": "Camera height offset in Struggle mode (lower).",
+      "fov": 58.0,
+      "_comment_fov": "Vertical field-of-view in Struggle mode."
+    },
+
+    "awe": {
+      "dist": 7.0,
+      "_comment_dist": "Camera boom distance in Awe mode (further back).",
+      "height": 3.2,
+      "_comment_height": "Camera height offset in Awe mode (higher for sky composition).",
+      "fov": 68.0,
+      "_comment_fov": "Vertical field-of-view in Awe mode (slightly wider).",
+      "cooldown_sec": 90.0,
+      "_comment_awe_cooldown": "Seconds after leaving Awe before it can trigger again.",
+      "min_hold_sec": 8.0,
+      "_comment_min_hold": "Minimum seconds Awe mode is held once triggered."
+    },
+
+    "spring": {
+      "freq_pos": 3.0,
+      "_comment_freq_pos": "Spring natural frequency for position (rad/s). Higher = snappier follow.",
+      "damp_pos": 0.9,
+      "_comment_damp_pos": "Damping ratio for position spring (1.0 = critically damped).",
+      "freq_rot": 4.0,
+      "_comment_freq_rot": "Spring natural frequency for rotation (rad/s).",
+      "damp_rot": 0.85,
+      "_comment_damp_rot": "Damping ratio for rotation spring."
+    },
+
+    "collision_radius": 0.25,
+    "_comment_collision_radius": "Sphere-cast radius for camera collision detection (simulation units).",
+
+    "wind_shake_k": 0.004,
+    "_comment_wind_shake_k": "Scale factor: shake amplitude per (m/s) of wind speed.",
+
+    "geo_shake_k_pre": 0.015,
+    "_comment_geo_shake_pre": "Shake amplitude per unit of pre-event intensity.",
+
+    "geo_shake_k_impact": 0.06,
+    "_comment_geo_shake_impact": "Shake amplitude (kick) per unit of impact intensity.",
+
+    "pan_to_event_max_deg": 15.0,
+    "_comment_pan_max": "Maximum degrees the camera pans toward a geo-event epicentre.",
+
+    "shoulder_offset": 0.35,
+    "_comment_shoulder": "Lateral shoulder offset for slight over-the-shoulder framing.",
+
+    "struggle_enter_visibility": 0.35,
+    "_comment_struggle_enter_vis": "Visibility threshold below which Struggle mode is entered.",
+    "struggle_exit_visibility": 0.45,
+    "_comment_struggle_exit_vis": "Visibility threshold above which Struggle mode can be exited.",
+    "struggle_enter_storm": 0.6,
+    "_comment_struggle_enter_storm": "Storm intensity threshold above which Struggle mode is entered.",
+    "struggle_exit_storm": 0.45,
+    "_comment_struggle_exit_storm": "Storm intensity threshold below which Struggle mode can be exited.",
+
+    "awe_enter_eclipse": 0.7,
+    "_comment_awe_enter_eclipse": "Eclipse factor above which Awe mode can be triggered.",
+    "awe_enter_visibility": 0.5,
+    "_comment_awe_enter_vis": "Minimum visibility required for Awe mode to trigger."
+  },
+
   "anim": {
     "base_stride": 0.8,
     "_comment_stride": "Base stride length in simulation units. Scaled by AnimParamFrame.stride_length.",
