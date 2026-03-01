@@ -112,6 +112,11 @@ class PlayerRegistry:
     # Queries
     # ------------------------------------------------------------------
 
+    def get_player_pos(self, player_id: str) -> Optional[List[float]]:
+        """Return position of *player_id*, or *None* if unknown."""
+        rec = self._players.get(player_id)
+        return list(rec.pos) if rec is not None else None
+
     def all_players(self) -> List[PlayerRecord]:
         """Snapshot of all registered player records."""
         return list(self._players.values())

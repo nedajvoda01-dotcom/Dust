@@ -1,4 +1,4 @@
-"""NetworkServer — Stage 21 authoritative WebSocket + HTTP server.
+"""NetworkServer — Stage 22 authoritative WebSocket + HTTP server.
 
 Serves the browser client (``client/index.html``) over HTTP and
 maintains a WebSocket endpoint for real-time world + player
@@ -9,10 +9,13 @@ Architecture
 * One asyncio event-loop drives everything.
 * GameBootstrap (headless) ticks in a background asyncio task.
 * New WebSocket clients receive a full ``WORLD_SYNC`` message.
-* ``WORLD_TICK`` is broadcast at ``net.tick_hz_world`` Hz (default 5 Hz).
-* ``PLAYERS`` is broadcast at ``net.tick_hz_players`` Hz (default 20 Hz).
+* ``WORLD_TICK`` is broadcast at ``net.world_tick_hz`` Hz (default 5 Hz).
+* ``PLAYERS`` is sent per-client at ``net.player_broadcast_hz`` Hz with
+  interest-management filtering (only nearby players included).
 * ``CLIMATE_SNAP`` is sent every ``net.snapshot_interval_sec`` seconds.
 * ``GEO_EVENT`` is sent whenever the simulation fires a new event.
+* ``PONG`` is returned to any ``PING`` from a client.
+* ``REJOIN_RESYNC`` from a client triggers a delta or full re-sync.
 
 Message types (JSON)
 --------------------
@@ -22,10 +25,14 @@ Server → Client
   PLAYERS      players: [{id, pos, vel, flags}]
   GEO_EVENT    eventId, eventType, pos, params
   CLIMATE_SNAP storms: [{lat, lon, radius, intensity}], globalDust
+  PONG         t (echoes client's PING timestamp)
+  REJOIN_RESYNC simTime, epoch, catchupEvents (or full WORLD_SYNC if stale)
 
 Client → Server
   JOIN         userAgent  (optional on reconnect)
   PLAYER_STATE pos, vel, flags
+  PING         t
+  REJOIN_RESYNC lastSeenTick, lastEventId, lastPatchId
 
 Public API
 ----------
@@ -37,13 +44,14 @@ NetworkServer(bootstrap, config, ...)
 from __future__ import annotations
 
 import asyncio
+import collections
 import json
 import math
 import os
 import secrets
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Deque, Dict, List, Optional
 
 from src.core.Config import Config
 from src.core.Logger import Logger
@@ -56,13 +64,19 @@ _TAG        = "NetworkServer"
 _CLIENT_DIR = Path(__file__).parent.parent.parent / "client"
 
 # Config fallbacks
-_DEFAULT_PORT           = 8765
-_DEFAULT_TICK_HZ_WORLD  = 5
-_DEFAULT_TICK_HZ_PLAYERS = 20
-_DEFAULT_SNAP_INTERVAL  = 30.0
-_DEFAULT_SPAWN_RADIUS   = 5.0
-_DEFAULT_SECTOR_DEG     = 5.0
-_PLAYER_TIMEOUT_S       = 30.0
+_DEFAULT_PORT             = 8765
+_DEFAULT_TICK_HZ_WORLD    = 5
+_DEFAULT_TICK_HZ_PLAYERS  = 20
+_DEFAULT_SNAP_INTERVAL    = 30.0
+_DEFAULT_SPAWN_RADIUS     = 5.0
+_DEFAULT_SECTOR_DEG       = 5.0
+_DEFAULT_SECTOR_RADIUS    = 2          # neighbouring sectors to include
+_DEFAULT_PLAYER_SEND_HZ   = 20        # max client→server msgs/sec
+_DEFAULT_INTERP_DELAY_MS  = 200
+_DEFAULT_MAX_EXTRAP_MS    = 150
+_DEFAULT_RESYNC_THRESHOLD = 5.0       # seconds of drift → hard resync
+_PLAYER_TIMEOUT_S         = 30.0
+_REJOIN_MAX_CATCHUP_EVENTS = 100      # if more, send full WORLD_SYNC
 
 
 class NetworkServer:
@@ -99,26 +113,41 @@ class NetworkServer:
         self._config    = config
 
         # Net parameters from config
-        self._port            = _DEFAULT_PORT
-        self._tick_hz_world   = _DEFAULT_TICK_HZ_WORLD
-        self._tick_hz_players = _DEFAULT_TICK_HZ_PLAYERS
-        self._snap_interval   = _DEFAULT_SNAP_INTERVAL
-        self._spawn_radius    = _DEFAULT_SPAWN_RADIUS
-        self._sector_deg      = _DEFAULT_SECTOR_DEG
+        self._port              = _DEFAULT_PORT
+        self._tick_hz_world     = _DEFAULT_TICK_HZ_WORLD
+        self._tick_hz_players   = _DEFAULT_TICK_HZ_PLAYERS
+        self._snap_interval     = _DEFAULT_SNAP_INTERVAL
+        self._spawn_radius      = _DEFAULT_SPAWN_RADIUS
+        self._sector_deg        = _DEFAULT_SECTOR_DEG
+        self._sector_radius     = _DEFAULT_SECTOR_RADIUS
+        self._player_send_hz    = _DEFAULT_PLAYER_SEND_HZ
+        self._interp_delay_ms   = _DEFAULT_INTERP_DELAY_MS
+        self._max_extrap_ms     = _DEFAULT_MAX_EXTRAP_MS
+        self._resync_threshold  = _DEFAULT_RESYNC_THRESHOLD
 
         if config is not None:
             self._port            = int(config.get(
                 "net", "ws_port",              default=_DEFAULT_PORT))
             self._tick_hz_world   = int(config.get(
-                "net", "tick_hz_world",        default=_DEFAULT_TICK_HZ_WORLD))
+                "net", "world_tick_hz",        default=_DEFAULT_TICK_HZ_WORLD))
             self._tick_hz_players = int(config.get(
-                "net", "tick_hz_players",      default=_DEFAULT_TICK_HZ_PLAYERS))
+                "net", "player_broadcast_hz",  default=_DEFAULT_TICK_HZ_PLAYERS))
             self._snap_interval   = float(config.get(
                 "net", "snapshot_interval_sec", default=_DEFAULT_SNAP_INTERVAL))
             self._spawn_radius    = float(config.get(
                 "net", "spawn_radius_m",        default=_DEFAULT_SPAWN_RADIUS))
             self._sector_deg      = float(config.get(
-                "net", "interest_sector_deg",   default=_DEFAULT_SECTOR_DEG))
+                "net", "sector_deg",            default=_DEFAULT_SECTOR_DEG))
+            self._sector_radius   = int(config.get(
+                "net", "sector_radius",         default=_DEFAULT_SECTOR_RADIUS))
+            self._player_send_hz  = int(config.get(
+                "net", "player_send_hz",        default=_DEFAULT_PLAYER_SEND_HZ))
+            self._interp_delay_ms = float(config.get(
+                "net", "interp_delay_ms",       default=_DEFAULT_INTERP_DELAY_MS))
+            self._max_extrap_ms   = float(config.get(
+                "net", "max_extrap_ms",         default=_DEFAULT_MAX_EXTRAP_MS))
+            self._resync_threshold = float(config.get(
+                "net", "resync_hard_threshold_sec", default=_DEFAULT_RESYNC_THRESHOLD))
 
         # Planet radius (for spawn anchor)
         planet_r = 1000.0
@@ -162,6 +191,10 @@ class NetworkServer:
         # Pending geo events to broadcast (filled by sim loop)
         self._pending_geo:   List[Dict[str, Any]] = []
         self._seen_event_count: int = 0
+
+        # Rate limiting: player_id → deque of recent message timestamps
+        # Uses collections.deque for O(1) popleft on window eviction.
+        self._rate_windows:  Dict[str, Deque[float]] = {}
 
         # Background task handles
         self._ws_server = None
@@ -291,7 +324,7 @@ class NetworkServer:
             async for raw in ws:
                 try:
                     msg = json.loads(raw)
-                    await self._on_client_message(player_id, msg)
+                    await self._on_client_message(player_id, ws, msg)
                 except Exception as exc:
                     # Log the exception type only — do not echo client-supplied
                     # data into the log to avoid leaking implementation details.
@@ -303,6 +336,33 @@ class NetworkServer:
             self._registry.remove(player_id)
             self._connections.pop(player_id, None)
             self._ws_to_player.pop(id(ws), None)
+            self._rate_windows.pop(player_id, None)
+
+    # ------------------------------------------------------------------
+    # Rate limiting
+    # ------------------------------------------------------------------
+
+    def _check_rate_limit(self, player_id: str) -> bool:
+        """Return *True* if this message is within the allowed rate.
+
+        Implements a sliding-window counter over a 1-second window using a
+        :class:`collections.deque` for O(1) popleft.
+        """
+        now = time.monotonic()
+        window: Deque[float] = self._rate_windows.setdefault(
+            player_id, collections.deque()
+        )
+
+        # Evict timestamps older than 1 second
+        cutoff = now - 1.0
+        while window and window[0] < cutoff:
+            window.popleft()
+
+        if len(window) >= self._player_send_hz:
+            return False  # rate-limited
+
+        window.append(now)
+        return True
 
     # ------------------------------------------------------------------
     # Client message dispatch
@@ -311,9 +371,33 @@ class NetworkServer:
     async def _on_client_message(
         self,
         player_id: str,
-        msg: Dict[str, Any],
+        ws_or_msg,
+        msg: Optional[Dict[str, Any]] = None,
     ) -> None:
+        """Dispatch a client message.
+
+        Accepts two call signatures for backwards-compatibility with tests
+        written before the ``ws`` parameter was added:
+
+        * ``_on_client_message(player_id, ws, msg)``  — new
+        * ``_on_client_message(player_id, msg)``       — legacy (ws=None)
+        """
+        # Resolve the two call signatures
+        if msg is None:
+            # Legacy 2-arg call: second positional is msg, ws is unknown
+            msg = ws_or_msg  # type: ignore[assignment]
+            ws  = self._connections.get(player_id)
+        else:
+            ws = ws_or_msg
+
         msg_type = msg.get("type", "")
+
+        # PING and REJOIN_RESYNC are control messages — exempt from rate limiting
+        # so that reconnects and RTT measurements are never silently dropped.
+        if msg_type not in ("PING", "REJOIN_RESYNC"):
+            if not self._check_rate_limit(player_id):
+                return
+
         if msg_type == "PLAYER_STATE":
             pos   = msg.get("pos",   [0.0, 0.0, 0.0])
             vel   = msg.get("vel",   [0.0, 0.0, 0.0])
@@ -323,6 +407,21 @@ class NetworkServer:
                 and isinstance(vel, list) and len(vel) == 3
             ):
                 self._registry.update(player_id, pos, vel, flags)
+
+        elif msg_type == "PING":
+            # Reflect timestamp back so the client can measure RTT
+            try:
+                await ws.send(json.dumps({
+                    "type": "PONG",
+                    "t":    msg.get("t"),
+                }))
+            except Exception:
+                pass
+
+        elif msg_type == "REJOIN_RESYNC":
+            last_event_id = int(msg.get("lastEventId", -1))
+            await self._send_rejoin(ws, player_id, last_event_id)
+
         # JOIN: just a reconnect hint — no action needed
 
     # ------------------------------------------------------------------
@@ -342,6 +441,32 @@ class NetworkServer:
             "geoEvents": self._world_state.geo_events()[-100:],
         })
         await ws.send(msg)
+
+    # ------------------------------------------------------------------
+    # REJOIN_RESYNC — delta or full re-sync
+    # ------------------------------------------------------------------
+
+    async def _send_rejoin(self, ws, player_id: str, last_event_id: int) -> None:
+        """Send catch-up events or a full WORLD_SYNC if the client is too stale."""
+        all_events = self._world_state.geo_events()
+        new_events = [
+            e for e in all_events
+            if int(e.get("eventId", -1)) > last_event_id
+        ]
+
+        if len(new_events) > _REJOIN_MAX_CATCHUP_EVENTS:
+            # Too stale: send a full WORLD_SYNC instead
+            await self._send_world_sync(ws, player_id)
+        else:
+            try:
+                await ws.send(json.dumps({
+                    "type":          "REJOIN_RESYNC",
+                    "simTime":       self._world_state.sim_time,
+                    "epoch":         self._world_state.epoch,
+                    "catchupEvents": new_events,
+                }))
+            except Exception:
+                pass
 
     # ------------------------------------------------------------------
     # Broadcast helpers
@@ -388,22 +513,46 @@ class NetworkServer:
                 await self._broadcast_climate_snap()
 
     async def _player_bcast_loop(self) -> None:
-        """Broadcast PLAYERS at *tick_hz_players* Hz."""
+        """Send PLAYERS to each client filtered by interest (sector proximity).
+
+        Each client receives only the players that are within
+        ``(sector_radius + 1) × sector_deg`` angular degrees of their own
+        position, keeping per-client bandwidth proportional to local density.
+        """
         interval = 1.0 / max(1, self._tick_hz_players)
+        # Interest cone: sector_deg × (sector_radius + 0.5)
+        view_deg = self._sector_deg * (self._sector_radius + 0.5)
+
         while self._running:
             await asyncio.sleep(interval)
-            players = [
-                {
-                    "id":    r.player_id,
-                    "pos":   r.pos,
-                    "vel":   r.vel,
-                    "flags": r.state_flags,
-                }
-                for r in self._registry.all_players()
-            ]
-            await self._broadcast(
-                json.dumps({"type": "PLAYERS", "players": players})
-            )
+
+            dead: List[str] = []
+            for pid, ws in list(self._connections.items()):
+                try:
+                    # Find this client's current position for filtering
+                    own_pos = self._registry.get_player_pos(pid)
+                    if own_pos is not None:
+                        nearby = self._registry.get_nearby(own_pos, view_deg)
+                    else:
+                        nearby = self._registry.all_players()
+
+                    players = [
+                        {
+                            "id":    r.player_id,
+                            "pos":   r.pos,
+                            "vel":   r.vel,
+                            "flags": r.state_flags,
+                        }
+                        for r in nearby
+                    ]
+                    await ws.send(
+                        json.dumps({"type": "PLAYERS", "players": players})
+                    )
+                except Exception:
+                    dead.append(pid)
+
+            for pid in dead:
+                self._connections.pop(pid, None)
 
     async def _sim_loop(self) -> None:
         """Advance the GameBootstrap simulation and sync world state."""
