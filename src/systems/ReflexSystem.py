@@ -219,6 +219,15 @@ class EnvironmentProber:
         self.ledge_step_len  = ledge_step_len
         self.ledge_threshold = ledge_threshold
 
+    @property
+    def has_ground_sampler(self) -> bool:
+        """Return True when a ground sampler is available for probing."""
+        return self._gs is not None
+
+    def set_ground_sampler(self, gs) -> None:
+        """Replace the ground sampler (e.g., at runtime during testing)."""
+        self._gs = gs
+
     # ------------------------------------------------------------------
     # Brace contact
     # ------------------------------------------------------------------
@@ -751,7 +760,7 @@ class ReflexSystem:
         )
 
         # ---- Probe environment (only when grounded or near-grounded) ----
-        if self._prober._gs is not None:
+        if self._prober.has_ground_sampler:
             # Determine "forward" from velocity or default to a tangent
             v_tang = ctrl.velocity - up * ctrl.velocity.dot(up)
             forward = (v_tang.normalized()

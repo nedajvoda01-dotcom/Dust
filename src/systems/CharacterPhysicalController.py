@@ -357,6 +357,10 @@ class CharacterPhysicalController:
         """Gizmo / log data filled after each update()."""
         return dict(self._debug)
 
+    def set_ground_sampler(self, sampler: IGroundSampler) -> None:
+        """Replace the ground sampler (e.g., to switch terrain mid-simulation)."""
+        self._ground = sampler
+
     # ------------------------------------------------------------------
     # Private: state transitions
     # ------------------------------------------------------------------

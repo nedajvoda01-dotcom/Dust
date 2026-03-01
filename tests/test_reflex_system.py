@@ -35,6 +35,7 @@ from src.systems.CharacterPhysicalController import (
     IGroundSampler,
 )
 from src.systems.ReflexSystem import (
+    AnimEvent,
     AnimEventType,
     AnimationEventStream,
     BalanceModel,
@@ -411,8 +412,8 @@ class TestEventStreamOrder(unittest.TestCase):
 
         # Swap to ledge ground
         ledge_gs  = _LedgeGround(PLANET_R, ledge_x=1.5)
-        ctrl._ground         = ledge_gs
-        reflex._prober._gs   = ledge_gs
+        ctrl.set_ground_sampler(ledge_gs)
+        reflex._prober.set_ground_sampler(ledge_gs)
 
         for _ in range(10):
             ctrl.update(1.0 / 30.0, desired_dir=Vec3(1.0, 0.0, 0.0),
@@ -503,9 +504,6 @@ class TestEventStreamOrder(unittest.TestCase):
             "Shock should trigger stumble_step or fall events"
         )
 
-
-# Import AnimEvent directly so tests can construct events
-from src.systems.ReflexSystem import AnimEvent
 
 if __name__ == "__main__":
     unittest.main()
