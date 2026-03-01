@@ -259,6 +259,42 @@
     "_comment_interval": "Target interval (game seconds) between full-field passes. Informational only; actual rate depends on cells_per_tick and call frequency."
   },
 
+  "atmo": {
+    "haze_density_base": 0.003,
+    "_comment_haze_density": "Base exponential haze density (Beer-Lambert). Higher = thicker haze at all distances.",
+    "haze_height_falloff": 0.001,
+    "_comment_haze_height": "Height decay rate for haze density (per simulation unit altitude).",
+    "rayleigh_strength": 1.0,
+    "_comment_rayleigh": "Rayleigh (blue) scatter multiplier.",
+    "mie_strength": 0.8,
+    "_comment_mie": "Mie (dusty forward) scatter multiplier.",
+    "mie_g": 0.76,
+    "_comment_mie_g": "Henyey-Greenstein anisotropy factor. 0=isotropic, closer to 1=stronger forward lobe.",
+    "vol_steps": 16,
+    "_comment_vol_steps": "Volumetric dust ray-march step count. Range: 8–24.",
+    "vol_max_distance": 5000.0,
+    "_comment_vol_max_dist": "Maximum ray-march distance for volumetric dust (simulation units).",
+    "vol_density_scale": 1.0,
+    "_comment_vol_density": "Global multiplier on sampled dust density in the volumetric pass.",
+    "whiteout_threshold": 0.7,
+    "_comment_whiteout": "Dust level [0-1] above which transmittance collapses toward white (storm whiteout).",
+    "sun2_sky_limit": 0.5,
+    "_comment_sun2_limit": "Maximum fraction of Sun1's sky contribution that Sun2 can add (prevents washed-out sky)."
+  },
+
+  "grade": {
+    "filmic_toe": 0.04,
+    "_comment_filmic_toe": "Filmic curve toe breakpoint. Values below this pass through linearly.",
+    "filmic_shoulder": 0.85,
+    "_comment_filmic_shoulder": "Filmic curve shoulder breakpoint. Values above this are compressed toward white.",
+    "shadow_tint": [0.80, 0.85, 1.00],
+    "_comment_shadow_tint": "RGB tint applied to dark (shadow) tones for cool-shadow split-toning.",
+    "highlight_tint": [1.00, 0.95, 0.80],
+    "_comment_highlight_tint": "RGB tint applied to bright (highlight) tones for warm-highlight split-toning.",
+    "sat_far_scale": 0.30,
+    "_comment_sat_far": "Maximum desaturation applied to far pixels (fog_factor=1). 0=no desat, 1=full greyscale."
+  },
+
   "sdf": {
     "lod": 4,
     "_comment_lod": "LOD level of surface tiles used as SDF chunk anchors. Higher = finer tiles = more chunks near player.",
