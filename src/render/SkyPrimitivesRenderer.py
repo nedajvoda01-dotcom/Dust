@@ -29,7 +29,7 @@ _DISC_SEGMENTS = 24
 _RING_SEGMENTS = 64
 
 
-
+class SkyPrimitivesRenderer:
     """Renders sky objects using the AstroSystem state.
 
     Call :meth:`render` once per frame after all 3-D geometry has been drawn.
