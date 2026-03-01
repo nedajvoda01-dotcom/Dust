@@ -669,6 +669,28 @@
     "_comment_auto_quality": "When true the client automatically reduces quality (vol steps, update divisor) on low FPS."
   },
 
+  "web": {
+    "_comment": "Stage 23 — browser deploy / WASM build settings.",
+    "build_id": "",
+    "_comment_build_id": "Content hash injected by build_web.sh; empty means auto-computed at runtime.",
+    "use_service_worker": true,
+    "_comment_sw": "Installs a Service Worker for offline asset caching.",
+    "enable_webgpu": true,
+    "_comment_webgpu": "Attempt WebGPU renderer first; falls back to WebGL2.",
+    "enable_webgl2_fallback": true,
+    "_comment_webgl2": "Allow WebGL2 as a fallback when WebGPU is unavailable.",
+    "auto_reload_on_build_mismatch": true,
+    "_comment_reload": "Force location.reload() (with throttle) when server buildId differs from client.",
+    "ws_path": "/ws",
+    "_comment_ws_path": "WebSocket endpoint path on the HTTP server.",
+    "static_dir": "web_client/dist",
+    "_comment_static_dir": "Directory containing hashed static assets served by the server.",
+    "ping_interval_sec": 10,
+    "_comment_ping": "Server-side WebSocket ping interval in seconds (0 = disabled).",
+    "enable_range_requests": true,
+    "_comment_range": "Serve Accept-Ranges: bytes for binary asset files."
+  },
+
   "world": {
     "reset_on_missing_state": true,
     "_comment": "When true, a missing world_state/ creates a fresh world on next start."
