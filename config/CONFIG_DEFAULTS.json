@@ -684,8 +684,7 @@
     "_comment_remote_lod_1": "Distance (sim units) below which full procedural animation is used for remote players.",
     "remote_lod_distance_2": 120.0,
     "_comment_remote_lod_2": "Distance (sim units) above which only the cheapest LOD rig is used."
-  }
-,
+  },
   "subsurface": {
     "_comment": "Stage 26 — subsurface world: caves, lava tubes, chambers, collapses.",
     "enable": true,
@@ -718,5 +717,38 @@
     "_comment_cave_audio_reverb_mix": "Reverb wet mix for cave acoustics (0=dry, 1=full reverb).",
     "collapse_event_rate_cap": 4,
     "_comment_collapse_event_rate_cap": "Maximum server-authoritative collapse events per in-game hour."
+  },
+  "subhaz": {
+    "_comment": "Stage 27 — subsurface hazards: cave collapses, sags, dust waves.",
+    "enable": true,
+    "_comment_enable": "Master toggle for the SubsurfaceHazardSystem.",
+    "tick_seconds": 10.0,
+    "_comment_tick_seconds": "Server hazard evaluation interval (seconds).",
+    "risk_threshold": 0.55,
+    "_comment_risk_threshold": "Sigmoid risk value above which an event may fire.",
+    "pre_min_sec": 2.0,
+    "_comment_pre_min_sec": "Minimum PRE phase duration (seconds).",
+    "pre_max_sec": 10.0,
+    "_comment_pre_max_sec": "Maximum PRE phase duration (seconds).",
+    "post_min_sec": 10.0,
+    "_comment_post_min_sec": "Minimum POST (dust settle) phase duration (seconds).",
+    "post_max_sec": 60.0,
+    "_comment_post_max_sec": "Maximum POST phase duration (seconds).",
+    "max_events_per_hour_global": 6,
+    "_comment_max_events_per_hour_global": "Hard cap on hazard events fired globally per in-game hour.",
+    "max_events_per_hour_zone": 2,
+    "_comment_max_events_per_hour_zone": "Hard cap on hazard events fired per cave zone per in-game hour.",
+    "chain_max_depth": 3,
+    "_comment_chain_max_depth": "Maximum chain-collapse propagation depth (hops through cave graph).",
+    "chain_decay": 0.45,
+    "_comment_chain_decay": "Per-hop probability decay for chain collapses (0..1).",
+    "max_patches_per_event": 12,
+    "_comment_max_patches_per_event": "Maximum SDF patches generated per hazard event (performance cap).",
+    "dust_wave_speed": 8.0,
+    "_comment_dust_wave_speed": "Dust-front propagation speed through tunnels (m/s).",
+    "dust_peak_density": 0.85,
+    "_comment_dust_peak_density": "Peak visibility-reduction density of a dust wave [0..1].",
+    "cooldown_same_cave_sec": 120.0,
+    "_comment_cooldown_same_cave_sec": "Minimum seconds between hazard events in the same cave zone."
   }
 }
