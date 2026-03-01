@@ -228,6 +228,43 @@
     "_comment_quake": "Quake impulse magnitude (normalised) above which brace state activates."
   },
 
+  "char": {
+    "mass": 75.0,
+    "_comment_mass": "Character mass (kg equivalent). Affects wind/impulse response.",
+    "gravity": 9.2,
+    "_comment_gravity": "Surface gravity (m/s^2 equivalent). Should match planet.gravity.",
+    "max_speed": 6.0,
+    "_comment_max_speed": "Maximum tangential speed (m/s).",
+    "accel": 8.0,
+    "_comment_accel": "Tangential acceleration toward desired velocity (m/s^2).",
+    "base_friction": 0.8,
+    "_comment_base_friction": "Ground friction coefficient (0=frictionless, 1=full stop).",
+    "air_drag": 0.1,
+    "_comment_air_drag": "Velocity decay factor while airborne (fraction/s).",
+    "wind_drag": 0.4,
+    "_comment_wind_drag": "Wind force multiplier on character (higher = more push).",
+    "max_slope_deg": 40.0,
+    "_comment_max_slope": "Maximum walkable slope in degrees; above this triggers Sliding.",
+    "slide_friction": 0.15,
+    "_comment_slide_friction": "Friction coefficient while in Sliding state.",
+    "ice_friction_multiplier": 0.15,
+    "_comment_ice_friction": "Multiplier on base friction when surface is fully icy (0=glass).",
+    "dust_slip_multiplier": 0.25,
+    "_comment_dust_slip": "Fraction by which deep dust reduces friction.",
+    "gust_strength": 2.5,
+    "_comment_gust_strength": "Amplitude of deterministic wind-gust component (m/s).",
+    "stumble_duration_min": 0.2,
+    "_comment_stumble_min": "Minimum stumble state duration (seconds).",
+    "stumble_duration_max": 0.8,
+    "_comment_stumble_max": "Maximum stumble state duration (seconds).",
+    "stumble_thresholds_shock": 0.3,
+    "_comment_stumble_shock": "Minimum GeoEventSignal intensity to trigger Stumbling.",
+    "capsule_radius": 0.4,
+    "_comment_capsule_r": "Character capsule radius (simulation units).",
+    "capsule_height": 1.8,
+    "_comment_capsule_h": "Character capsule height (simulation units)."
+  },
+
   "seed": {
     "default": 42,
     "_comment": "Default world seed. Any integer is valid. Determines all procedural generation."
