@@ -1,23 +1,23 @@
 {
-  "_comment": "BARYCENTER — Default parameter ranges. Values are starting points, not final physics. All systems read from this file; no magic numbers in code.",
+  "_comment": "BARYCENTER \u2014 Default parameter ranges. Values are starting points, not final physics. All systems read from this file; no magic numbers in code.",
   "planet": {
     "radius_units": 1000,
-    "_comment_radius": "Simulation units. 1 unit ≈ 1 metre equivalent at character scale.",
+    "_comment_radius": "Simulation units. 1 unit \u2248 1 metre equivalent at character scale.",
     "gravity": 9.2
   },
   "day": {
     "length_minutes": 90,
-    "_comment": "Real-time minutes per full planet rotation. Range: 60–120."
+    "_comment": "Real-time minutes per full planet rotation. Range: 60\u2013120."
   },
   "binary": {
     "period_minutes": 18,
-    "_comment": "Real-time minutes for secondary sun to complete one orbit relative to primary. Range: 10–30.",
+    "_comment": "Real-time minutes for secondary sun to complete one orbit relative to primary. Range: 10\u201330.",
     "primary_luminosity": 1.0,
     "secondary_luminosity": 0.35,
     "secondary_color_temp_kelvin": 8500,
     "_comment_color": "Primary is warm (K/G-type ~5000K implied), secondary is hotter/bluer.",
     "eccentricity": 0.0,
-    "_comment_eccentricity": "Binary orbit eccentricity. 0 = circular. Range: 0–0.2.",
+    "_comment_eccentricity": "Binary orbit eccentricity. 0 = circular. Range: 0\u20130.2.",
     "mass_ratio": 0.35,
     "_comment_mass_ratio": "M2/M1 mass ratio. Determines barycenter split."
   },
@@ -73,9 +73,9 @@
   },
   "atmosphere": {
     "dust_base": 0.12,
-    "_comment_dust": "Baseline dust suspension (0–1). Storms push this higher.",
+    "_comment_dust": "Baseline dust suspension (0\u20131). Storms push this higher.",
     "haze_density": 0.55,
-    "_comment_haze": "Atmospheric scattering density (0–1). Controls depth-layer separation.",
+    "_comment_haze": "Atmospheric scattering density (0\u20131). Controls depth-layer separation.",
     "scattering_color": [
       0.72,
       0.58,
@@ -85,7 +85,7 @@
   },
   "pixel": {
     "downscale_factor": 4,
-    "_comment": "Integer only. Frame rendered at 1/N resolution then upscaled. Range: 3–6.",
+    "_comment": "Integer only. Frame rendered at 1/N resolution then upscaled. Range: 3\u20136.",
     "dither_strength": 0.6,
     "_comment_dither": "0 = no dither, 1 = full Bayer matrix amplitude.",
     "palette_levels": 32,
@@ -93,7 +93,7 @@
   },
   "lighting": {
     "light_bands": 4,
-    "_comment": "Discrete surface shading bands. 0 = smooth, 1–5 = stepped. Range: 0–5.",
+    "_comment": "Discrete surface shading bands. 0 = smooth, 1\u20135 = stepped. Range: 0\u20135.",
     "sun_max_elevation_deg": 35,
     "_comment_elev": "Primary sun elevation cap for default composition state.",
     "shadow_color": [
@@ -112,7 +112,7 @@
     "_comment": "Base wind speed in simulation units/s at sea level.",
     "wind_gust_multiplier": 3.2,
     "storm_threshold_pressure_delta": 0.25,
-    "_comment_storm": "Pressure differential (normalised 0–1) above which storm onset begins.",
+    "_comment_storm": "Pressure differential (normalised 0\u20131) above which storm onset begins.",
     "thermal_mass": 0.8,
     "_comment_thermal": "Climate field inertia. Higher = slower response to Insolation changes.",
     "grid_w": 64,
@@ -209,13 +209,13 @@
   },
   "tectonic": {
     "plate_count": 18,
-    "_comment_plate_count": "Number of tectonic plates. Range: 12–30.",
+    "_comment_plate_count": "Number of tectonic plates. Range: 12\u201330.",
     "stress_rate": 0.01,
     "_comment_stress_rate": "Rate at which stress accumulates per second in boundary zones.",
     "fracture_rate": 0.02,
     "_comment_fracture_rate": "Rate at which fracture accumulates from stress per second.",
     "field_width": 128,
-    "_comment_field": "Equirectangular field resolution (width × height). Coarse is intentional.",
+    "_comment_field": "Equirectangular field resolution (width \u00d7 height). Coarse is intentional.",
     "field_height": 64,
     "boundary_threshold_rad": 0.08,
     "_comment_boundary": "Angular distance (radians) within which a point is considered a boundary zone.",
@@ -285,13 +285,13 @@
   },
   "sched": {
     "insolation_hz": 2.0,
-    "_comment_insol_hz": "Update rate for InsolationField in Hz (calls per game-second). Range: 2–5.",
+    "_comment_insol_hz": "Update rate for InsolationField in Hz (calls per game-second). Range: 2\u20135.",
     "climate_fixed_dt": 1.0,
-    "_comment_climate_dt": "Fixed time-step for ClimateSystem (game-seconds per step). Range: 0.5–2.0.",
+    "_comment_climate_dt": "Fixed time-step for ClimateSystem (game-seconds per step). Range: 0.5\u20132.0.",
     "geology_tick_seconds": 5.0,
-    "_comment_geo_tick": "Fixed interval between TectonicPlatesSystem stress updates (game-seconds). Range: 2–10.",
+    "_comment_geo_tick": "Fixed interval between TectonicPlatesSystem stress updates (game-seconds). Range: 2\u201310.",
     "geoevent_tick_seconds": 10.0,
-    "_comment_geoevent_tick": "Fixed interval between GeoEventSystem risk ticks (game-seconds). Range: 5–20.",
+    "_comment_geoevent_tick": "Fixed interval between GeoEventSystem risk ticks (game-seconds). Range: 5\u201320.",
     "near_radius": 10000.0,
     "_comment_near_radius": "Radius (simulation units) around the player treated as near-field for temporal LOD.",
     "far_update_divisor": 4,
@@ -339,7 +339,7 @@
     "mie_g": 0.76,
     "_comment_mie_g": "Henyey-Greenstein anisotropy factor. 0=isotropic, closer to 1=stronger forward lobe.",
     "vol_steps": 16,
-    "_comment_vol_steps": "Volumetric dust ray-march step count. Range: 8–24.",
+    "_comment_vol_steps": "Volumetric dust ray-march step count. Range: 8\u201324.",
     "vol_max_distance": 5000.0,
     "_comment_vol_max_dist": "Maximum ray-march distance for volumetric dust (simulation units).",
     "vol_density_scale": 1.0,
@@ -405,7 +405,7 @@
     "stability_balance_k": 0.5,
     "_comment_stability_balance_k": "Balance-loss scale increase when ground_stability is 0.",
     "variation_window_sec": 2.0,
-    "_comment_variation_window": "RNG bucket size (seconds) — micro-variations change at most once per window.",
+    "_comment_variation_window": "RNG bucket size (seconds) \u2014 micro-variations change at most once per window.",
     "variation_strength": 0.08,
     "_comment_variation_strength": "Max fractional micro-variation added to stride/cadence."
   },
@@ -527,7 +527,7 @@
     "style_exaggeration_max": 0.3,
     "_comment_exag": "Maximum fractional exaggeration of arm/torso motion at full effort.",
     "squash_stretch_max": 0.07,
-    "_comment_squash": "Maximum pelvis scale deviation for squash/stretch (e.g. 0.07 = ±7%).",
+    "_comment_squash": "Maximum pelvis scale deviation for squash/stretch (e.g. 0.07 = \u00b17%).",
     "timing_var_strength": 0.06,
     "_comment_timing_var": "Maximum fractional cadence variation added by seeded per-bucket noise.",
     "micro_jitter_strength": 0.02,
@@ -538,7 +538,7 @@
     "_comment_blend": "Easing function used for action-layer blend weights. Currently: ease_in_out."
   },
   "audio": {
-    "_comment": "Stage 19 ProceduralAudioSystem — all synthesis, no external assets.",
+    "_comment": "Stage 19 ProceduralAudioSystem \u2014 all synthesis, no external assets.",
     "master_gain": 0.9,
     "_comment_master": "Global output amplitude multiplier [0..1].",
     "wind_gain": 1.0,
@@ -548,7 +548,7 @@
     "foot_gain": 1.0,
     "_comment_foot_gain": "Footsteps channel output gain.",
     "suit_gain": 0.5,
-    "_comment_suit_gain": "Suit (breath/fabric/servo) channel output gain. Low by design — suit is subtle.",
+    "_comment_suit_gain": "Suit (breath/fabric/servo) channel output gain. Low by design \u2014 suit is subtle.",
     "geo_gain": 1.0,
     "_comment_geo_gain": "Shared geo channel gain multiplier.",
     "wind_whistle_enable": true,
@@ -584,7 +584,7 @@
   },
   "boot": {
     "spawn_attempts": 64,
-    "_comment_spawn_attempts": "Number of candidate spawn points evaluated; more → better spawn, slower boot.",
+    "_comment_spawn_attempts": "Number of candidate spawn points evaluated; more \u2192 better spawn, slower boot.",
     "spawn_slope_max_deg": 25.0,
     "_comment_spawn_slope": "Spawn candidates with slope above this (degrees) are penalised.",
     "spawn_stability_min": 0.3,
@@ -599,7 +599,7 @@
     "_comment_headless": "When true, disables all rendering and audio (for CI / smoke tests)."
   },
   "net": {
-    "_comment": "Stage 21/22 — multiplayer networking layer.",
+    "_comment": "Stage 21/22 \u2014 multiplayer networking layer.",
     "enabled": false,
     "_comment_enabled": "Set true to start the WebSocket server on launch.",
     "ws_port": 8765,
@@ -607,7 +607,7 @@
     "tick_hz_world": 5,
     "_comment_tick_world": "WORLD_TICK broadcast rate (Hz).",
     "tick_hz_players": 20,
-    "_comment_tick_players": "PLAYERS broadcast rate (Hz). Range: 10–20.",
+    "_comment_tick_players": "PLAYERS broadcast rate (Hz). Range: 10\u201320.",
     "player_send_hz": 20,
     "_comment_player_send_hz": "Maximum PLAYER_STATE messages accepted from a single client per second (rate limit).",
     "player_broadcast_hz": 20,
@@ -632,7 +632,7 @@
     "_comment_resync_hard": "simTime error (seconds) above which a hard time-resync is applied on the client."
   },
   "perf": {
-    "_comment": "Stage 22 — client-side CPU/GPU budget parameters.",
+    "_comment": "Stage 22 \u2014 client-side CPU/GPU budget parameters.",
     "mesh_budget_ms": 4.0,
     "_comment_mesh_budget_ms": "Wall-time budget per frame for chunk meshing (milliseconds).",
     "max_chunks_per_frame_remote_patches": 2,
@@ -641,7 +641,7 @@
     "_comment_auto_quality": "When true the client automatically reduces quality (vol steps, update divisor) on low FPS."
   },
   "web": {
-    "_comment": "Stage 23 — browser deploy / WASM build settings.",
+    "_comment": "Stage 23 \u2014 browser deploy / WASM build settings.",
     "build_id": "",
     "_comment_build_id": "Content hash injected by build_web.sh; empty means auto-computed at runtime.",
     "use_service_worker": true,
@@ -666,7 +666,7 @@
     "_comment": "When true, a missing world_state/ creates a fresh world on next start."
   },
   "ops": {
-    "_comment": "Stage 24 — operational layer configuration.",
+    "_comment": "Stage 24 \u2014 operational layer configuration.",
     "log_rotate_mb": 100,
     "log_keep_files": 10,
     "baseline_interval_min": 60,
@@ -679,9 +679,9 @@
     "ops_http_bind": "127.0.0.1"
   },
   "presence": {
-    "_comment": "Stage 25 — diegetic multiplayer presence (no UI, no markers).",
+    "_comment": "Stage 25 \u2014 diegetic multiplayer presence (no UI, no markers).",
     "headlamp_intensity_day": 0.15,
-    "_comment_headlamp_day": "Headlamp output multiplier during daylight. Low — barely noticeable in bright light.",
+    "_comment_headlamp_day": "Headlamp output multiplier during daylight. Low \u2014 barely noticeable in bright light.",
     "headlamp_intensity_night": 1.0,
     "_comment_headlamp_night": "Headlamp output multiplier at night. Full beam visible at distance.",
     "headlamp_scatter_in_whiteout": 0.6,
@@ -706,17 +706,17 @@
     "_comment_remote_lod_2": "Distance (sim units) above which only the cheapest LOD rig is used."
   },
   "subsurface": {
-    "_comment": "Stage 26 — subsurface world: caves, lava tubes, chambers, collapses.",
+    "_comment": "Stage 26 \u2014 subsurface world: caves, lava tubes, chambers, collapses.",
     "enable": true,
     "_comment_enable": "Master toggle for the subsurface system.",
     "seed_salt": 1554229278,
     "_comment_seed_salt": "XOR salt applied to the global seed before cave generation.",
     "shallow_prob": 0.6,
-    "_comment_shallow_prob": "Probability of generating a node in the shallow layer (0–200 m).",
+    "_comment_shallow_prob": "Probability of generating a node in the shallow layer (0\u2013200 m).",
     "mid_prob": 0.3,
-    "_comment_mid_prob": "Probability of generating a node in the mid layer (200–1000 m).",
+    "_comment_mid_prob": "Probability of generating a node in the mid layer (200\u20131000 m).",
     "deep_prob": 0.1,
-    "_comment_deep_prob": "Probability of generating a node in the deep layer (1–5 km).",
+    "_comment_deep_prob": "Probability of generating a node in the deep layer (1\u20135 km).",
     "tube_radius_min": 4.0,
     "_comment_tube_radius_min": "Minimum lava tube / tunnel radius (metres).",
     "tube_radius_max": 18.0,
@@ -739,7 +739,7 @@
     "_comment_collapse_event_rate_cap": "Maximum server-authoritative collapse events per in-game hour."
   },
   "subhaz": {
-    "_comment": "Stage 27 — subsurface hazards: cave collapses, sags, dust waves.",
+    "_comment": "Stage 27 \u2014 subsurface hazards: cave collapses, sags, dust waves.",
     "enable": true,
     "_comment_enable": "Master toggle for the SubsurfaceHazardSystem.",
     "tick_seconds": 10.0,
@@ -772,7 +772,7 @@
     "_comment_cooldown_same_cave_sec": "Minimum seconds between hazard events in the same cave zone."
   },
   "biome": {
-    "_comment": "Stage 28 — BiomeAtlasSystem configuration.",
+    "_comment": "Stage 28 \u2014 BiomeAtlasSystem configuration.",
     "enable": true,
     "macro_scale_km": 150.0,
     "meso_scale_km": 8.0,
@@ -781,12 +781,12 @@
     "impact_zone_frequency": 0.88
   },
   "mat": {
-    "_comment": "Stage 28 — ProceduralMaterialSystem v2 tuning.",
+    "_comment": "Stage 28 \u2014 ProceduralMaterialSystem v2 tuning.",
     "micro_normal_strength": 0.15,
     "speckle_strength": 0.04
   },
   "overlay": {
-    "_comment": "Stage 28 — transient surface overlay parameters.",
+    "_comment": "Stage 28 \u2014 transient surface overlay parameters.",
     "dust_max": 1.0,
     "ice_max": 1.0,
     "debris_max": 1.0,
@@ -815,11 +815,11 @@
     "_comment_ice_melt": "IceOverlay melt rate multiplier."
   },
   "evo": {
-    "_comment": "Stage 30 — LongHorizonEvolutionSystem configuration.",
+    "_comment": "Stage 30 \u2014 LongHorizonEvolutionSystem configuration.",
     "enable": true,
     "_comment_enable": "Master on/off switch for the evolution system.",
     "tick_seconds": 60.0,
-    "_comment_tick": "Evolution tick interval in game-seconds (30–120 recommended).",
+    "_comment_tick": "Evolution tick interval in game-seconds (30\u2013120 recommended).",
     "tiles_per_tick": 256,
     "_comment_tiles": "Number of tiles updated per evolution tick (budget control).",
     "snapshot_interval_sec": 120.0,
@@ -827,9 +827,9 @@
     "delta_interval_sec": 20.0,
     "_comment_delta": "Sparse delta broadcast interval (seconds).",
     "grid_w": 64,
-    "_comment_grid_w": "Evolution grid width (longitude). Should match or be ≤ climate grid_w.",
+    "_comment_grid_w": "Evolution grid width (longitude). Should match or be \u2264 climate grid_w.",
     "grid_h": 32,
-    "_comment_grid_h": "Evolution grid height (latitude). Should match or be ≤ climate grid_h.",
+    "_comment_grid_h": "Evolution grid height (latitude). Should match or be \u2264 climate grid_h.",
     "dust_lift_k": 0.02,
     "_comment_dust_lift_k": "Dust lifting rate coefficient per evolution tick.",
     "dust_dep_k": 0.03,
@@ -853,7 +853,7 @@
     "enable": true,
     "_comment_enable": "Master switch for SkyPhenomenaSystem (Stage 31).",
     "halo_theta_deg": 22.0,
-    "_comment_halo_theta": "Peak angle of the 22° ice-crystal halo (degrees).",
+    "_comment_halo_theta": "Peak angle of the 22\u00b0 ice-crystal halo (degrees).",
     "halo_sigma_deg": 1.5,
     "_comment_halo_sigma": "Gaussian half-width of the halo ring (degrees).",
     "halo_strength_k": 0.55,
@@ -940,7 +940,7 @@
     }
   },
   "mega": {
-    "_comment": "Stage 33 — rare mega-events (super-storm, global veil, rift, ring anomaly)",
+    "_comment": "Stage 33 \u2014 rare mega-events (super-storm, global veil, rift, ring anomaly)",
     "enable": true,
     "cooldown_hours_sim": 6.0,
     "poisson_lambda": 0.03,
@@ -972,5 +972,33 @@
       "depth_m_max": 500.0
     },
     "fallback_mode": "none"
+  },
+  "deform": {
+    "enable": true,
+    "grid_res": 64,
+    "indent_k": 0.012,
+    "yield_dust": 500.0,
+    "yield_snow": 800.0,
+    "yield_scree": 300.0,
+    "yield_ice_film": 5000.0,
+    "yield_bedrock": 1000000000.0,
+    "mass_push_k": 0.08,
+    "slip_track_k": 0.06,
+    "relax_tau_h_sec": 120.0,
+    "relax_tau_m_sec": 90.0,
+    "relax_storm_multiplier": 4.0,
+    "m_base_default": 0.5,
+    "net": {
+      "contact_send_hz": 5.0,
+      "stamp_broadcast_hz": 2.0,
+      "interest_radius_m": 200.0,
+      "history_window_sec": 120.0
+    },
+    "render": {
+      "max_uploads_per_frame": 4
+    },
+    "cache": {
+      "max_active_chunks": 16
+    }
   }
 }
