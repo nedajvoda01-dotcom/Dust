@@ -1151,5 +1151,69 @@
     "_comment_max_constraint_solve_iterations": "Solver iterations budget per physics tick.",
     "ttc_max_sec": 3.0,
     "_comment_ttc_max_sec": "Maximum time-to-contact horizon [s] for opportunity scoring."
+  },
+  "sim": {
+    "_comment": "Stage 42 — simulation tick rates.",
+    "tick_hz": 60,
+    "_comment_tick_hz": "Primary simulation tick rate [Hz] (physics, motor, IK)."
+  },
+  "determinism": {
+    "_comment": "Stage 42 — DeterminismContract settings.",
+    "hash_interval_sec": 5.0,
+    "_comment_hash_interval": "Seconds between StateHashSync checks.",
+    "strict_mode": false,
+    "_comment_strict": "Raise DeterminismViolation instead of logging (dev/CI only)."
+  },
+  "budget": {
+    "_comment": "Stage 42 — BudgetManager per-subsystem limits.",
+    "fallback_enable": true,
+    "_comment_fallback_enable": "Enable automatic FallbackLadder degradation when over budget.",
+    "motor": {
+      "max_ik_iters": 120,
+      "_comment_ik_iters": "Max IK solver iterations per frame.",
+      "max_constraint_iters": 64,
+      "_comment_constraint_iters": "Max constraint-solve iterations per frame."
+    },
+    "audio": {
+      "max_resonators": 32,
+      "_comment_resonators": "Max simultaneously active audio resonators.",
+      "max_modes_per_resonator": 16,
+      "_comment_modes": "Max modal modes per resonator.",
+      "max_impulses_per_sec": 120,
+      "_comment_impulses": "Max audio impulses per second."
+    },
+    "deform": {
+      "max_chunks": 128,
+      "_comment_chunks": "Max simultaneously active deformation chunks.",
+      "max_stamp_apply_per_sec": 60,
+      "_comment_stamp": "Max deformation stamp applications per second.",
+      "max_gpu_uploads_per_frame": 8,
+      "_comment_gpu_uploads": "Max GPU deformation uploads per frame."
+    },
+    "grasp": {
+      "max_active_grasps": 8,
+      "_comment_grasps": "Max simultaneous active grasps in the world.",
+      "max_solve_iters": 16,
+      "_comment_solve_iters": "Max grasp constraint solve iterations per tick."
+    },
+    "macro": {
+      "max_active_phenomena": 4,
+      "_comment_phenomena": "Max simultaneously active macro phenomena.",
+      "max_mega_patch_segments": 256,
+      "_comment_segments": "Max mega-patch segments active at once."
+    },
+    "net": {
+      "max_bps": 65536,
+      "_comment_bps": "Max network bytes per second per client.",
+      "max_stamp_batches_per_sec": 30,
+      "_comment_stamp_batches": "Max stamp batches sent per second."
+    }
+  },
+  "telemetry": {
+    "_comment": "Stage 42 — RuntimeTelemetry settings (dev-only).",
+    "enable_dev": true,
+    "_comment_enable": "Enable dev-only telemetry (disable in production).",
+    "ringbuffer_sec": 60,
+    "_comment_ringbuffer": "Ring-buffer log duration in seconds."
   }
 }
