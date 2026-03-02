@@ -443,7 +443,19 @@
     "ledge_threshold": 0.8,
     "_comment_ledge_thresh": "Minimum height drop (simulation units) to classify as a ledge.",
     "dev_visualise": false,
-    "_comment_dev_vis": "Dev mode: log reflex state and probe rays each tick (no UI)."
+    "_comment_dev_vis": "Dev mode: log reflex state and probe rays each tick (no UI).",
+    "r_max_default": 0.15,
+    "_comment_r_max_default": "Normal reflex look-bias ceiling [0..1].",
+    "r_max_critical": 0.35,
+    "_comment_r_max_critical": "Critical stimulus reflex ceiling (rare).",
+    "decay_tau_sec": 0.4,
+    "_comment_decay_tau": "Reflex decay time constant [s].",
+    "brace_gain": 0.6,
+    "_comment_brace_gain": "Vibration → brace bias conversion factor.",
+    "slowdown_gain": 0.4,
+    "_comment_slowdown_gain": "Risk → slowdown bias conversion factor.",
+    "hysteresis": 0.05,
+    "_comment_hysteresis": "Minimum Δ to update reflex r upward (avoids jitter)."
   },
   "cam": {
     "mode_cooldown_sec": 5.0,
@@ -648,7 +660,9 @@
     "max_extrap_ms": 150,
     "_comment_max_extrap_ms": "Maximum extrapolation window (ms) before remote player is frozen.",
     "resync_hard_threshold_sec": 5.0,
-    "_comment_resync_hard": "simTime error (seconds) above which a hard time-resync is applied on the client."
+    "_comment_resync_hard": "simTime error (seconds) above which a hard time-resync is applied on the client.",
+    "appearance_send_on_join": true,
+    "_comment_appearance_send": "Broadcast SuitKitDescriptor to all clients when a player joins."
   },
   "perf": {
     "_comment": "Stage 22 — client-side CPU/GPU budget parameters.",
@@ -1215,5 +1229,38 @@
     "_comment_enable": "Enable dev-only telemetry (disable in production).",
     "ringbuffer_sec": 60,
     "_comment_ringbuffer": "Ring-buffer log duration in seconds."
+  },
+  "input": {
+    "_comment": "Stage 43 — WASD + mouse input system.",
+    "move_frame": "camera",
+    "_comment_move_frame": "Reference frame for WASD: 'camera' (default) or 'body'.",
+    "pitch_max_deg": 80,
+    "_comment_pitch_deg": "Maximum pitch angle [deg] for look direction (neck limit).",
+    "mouse_sens_deg_per_unit": 0.15,
+    "_comment_mouse_sens": "Degrees of look rotation per raw mouse unit.",
+    "smooth_tau_sec": 0.08,
+    "_comment_smooth_tau": "Exponential smoothing time constant for move direction [s]."
+  },
+  "look": {
+    "_comment": "Stage 43 — LookRigController head/torso/body solver.",
+    "head_yaw_max_deg": 60,
+    "_comment_head_yaw": "Max head yaw relative to torso [deg].",
+    "torso_yaw_max_deg": 30,
+    "_comment_torso_yaw": "Max torso yaw relative to body [deg].",
+    "body_yaw_rate_deg_per_sec": 90,
+    "_comment_body_yaw_rate": "Max body rotation speed when standing [deg/s].",
+    "pitch_max_deg": 80,
+    "_comment_pitch_max": "Max pitch for head look [deg]."
+  },
+  "suit": {
+    "_comment": "Stage 43 — SuitKit procedural character assembly.",
+    "mass_variation_pct": 0.06,
+    "_comment_mass_var": "Suit extra mass variation ±fraction (e.g. 0.06 = ±6%).",
+    "com_shift_max": 0.03,
+    "_comment_com_shift": "Max normalised COM shift from backpack [0..1].",
+    "inertia_var": 0.05,
+    "_comment_inertia_var": "Inertia scale variation ±fraction.",
+    "palette_id": 0,
+    "_comment_palette": "Default palette index (0 = dark base + orange accent)."
   }
 }
