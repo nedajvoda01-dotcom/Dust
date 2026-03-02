@@ -848,5 +848,31 @@
         "_comment_slope_events": "Cap on slope-collapse events generated per sim-hour.",
         "network_quantization_bits": 8,
         "_comment_quant": "Bit depth for field quantisation in network messages (8 or 16)."
+    },
+    "skyphen": {
+        "enable": true,
+        "_comment_enable": "Master switch for SkyPhenomenaSystem (Stage 31).",
+        "halo_theta_deg": 22.0,
+        "_comment_halo_theta": "Peak angle of the 22° ice-crystal halo (degrees).",
+        "halo_sigma_deg": 1.5,
+        "_comment_halo_sigma": "Gaussian half-width of the halo ring (degrees).",
+        "halo_strength_k": 0.55,
+        "_comment_halo_k": "Peak intensity multiplier for the halo effect.",
+        "corona_strength_k": 0.40,
+        "_comment_corona_k": "Peak intensity for diffraction corona (dust/crystal near sun).",
+        "parhelia_enable": true,
+        "_comment_parhelia_enable": "Enable parhelion (sun dog) rendering.",
+        "parhelia_rarity": 0.25,
+        "_comment_parhelia_rarity": "Fraction of time-buckets where parhelia appear [0-1].",
+        "parhelia_timebucket_sec": 60.0,
+        "_comment_parhelia_tb": "Duration (seconds) of each parhelia on/off decision bucket.",
+        "ring_glint_strength_k": 0.35,
+        "_comment_ring_glint_k": "Intensity of ring-edge arc / glint effect.",
+        "ring_glint_rarity": 0.30,
+        "_comment_ring_glint_rarity": "Fraction of buckets where ring glints appear [0-1].",
+        "temporal_tau_sec": 2.0,
+        "_comment_tau": "Exponential-smoothing time constant (seconds) for strength transitions.",
+        "render_scale": 1.0,
+        "_comment_render_scale": "Pre-pixel render scale factor (1.0 / 0.5 / 0.25)."
     }
 }
