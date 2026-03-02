@@ -1070,5 +1070,34 @@
       "opportunity_radius": 8.0,
       "_comment_opportunity_radius": "Radius [m] within which an assist opportunity is considered."
     }
+  },
+  "intent": {
+    "_comment": "Stage 38 — Autonomous Micro-Intent (IntentArbitrator).",
+    "tick_hz": 10,
+    "_comment_tick_hz": "IntentArbitrator update rate [Hz]; 5–15 Hz per spec §10.",
+    "blend_tau_sec": 0.15,
+    "_comment_blend_tau_sec": "Exponential blend time constant for mode transitions [s].",
+    "w_balance": 1.0,
+    "_comment_w_balance": "Weight for balanceRisk component of TotalCost.",
+    "w_slip": 1.0,
+    "_comment_w_slip": "Weight for slipRisk component.",
+    "w_visibility": 1.0,
+    "_comment_w_visibility": "Weight for (1-visibility) component.",
+    "w_wind": 1.0,
+    "_comment_w_wind": "Weight for windLoad component.",
+    "w_vibration": 1.0,
+    "_comment_w_vibration": "Weight for vibrationLevel component.",
+    "w_proximity": 0.5,
+    "_comment_w_proximity": "Weight for crowding/presenceNear component.",
+    "w_uncertainty": 0.8,
+    "_comment_w_uncertainty": "Weight for audioUrgency component.",
+    "mode_hysteresis_margin": 0.0,
+    "_comment_mode_hysteresis_margin": "Global offset applied to all mode enter/exit thresholds.",
+    "assist_threshold": 0.4,
+    "_comment_assist_threshold": "Minimum assistOpportunity score to enter AssistPreparation mode.",
+    "max_speed_scale_under_risk": 0.2,
+    "_comment_max_speed_scale_under_risk": "Minimum speed multiplier when movementConfidence is at zero.",
+    "max_stance_bias": 0.9,
+    "_comment_max_stance_bias": "Maximum stanceWidthBias value that can be applied under high-risk conditions [0..1]."
   }
 }
