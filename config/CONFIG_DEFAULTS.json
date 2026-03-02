@@ -1287,5 +1287,27 @@
       "support": 0.7,
       "speed": 0.3
     }
+  },
+  "material": {
+    "tick_hz": 0.5,
+    "cells_per_tick": 64,
+    "dust_to_crust_k": 0.015,
+    "snow_compaction_k": 0.020,
+    "icefilm_form_k": 0.025,
+    "icefilm_melt_k": 0.040,
+    "roughness_polish_k": 0.010,
+    "brittle_threshold": 0.70,
+    "crust_break_k": 0.30,
+    "mu_icefilm_multiplier": 0.15,
+    "mu_roughness_scale": 0.40,
+    "mu_dust_scale": 0.10,
+    "mu_crust_hardness_scale": -0.05,
+    "mu_snow_compaction_scale": 0.05,
+    "crust_indent_reduction": 0.80,
+    "snow_indent_reduction": 0.60,
+    "dust_indent_gain": 0.50,
+    "crust_push_reduction": 0.75,
+    "snapshot_quantization": 8,
+    "update_hz": 0.5
   }
 }
