@@ -1151,5 +1151,49 @@
     "_comment_max_constraint_solve_iterations": "Solver iterations budget per physics tick.",
     "ttc_max_sec": 3.0,
     "_comment_ttc_max_sec": "Maximum time-to-contact horizon [s] for opportunity scoring."
+  },
+  "sim": {
+    "_comment": "Stage 42 — Deterministic simulation tick rates.",
+    "tick_hz": 60,
+    "_comment_tick_hz": "Fixed simulation tick rate (Hz). Physics/motor/IK subsystems."
+  },
+  "determinism": {
+    "_comment": "Stage 42 — Determinism contract settings.",
+    "hash_interval_sec": 5.0,
+    "_comment_hash_interval": "Seconds between state-hash checks in multiplayer.",
+    "drift_thresholds": {
+      "level1": 1,
+      "level2": 3,
+      "level3": 6,
+      "level4": 10
+    }
+  },
+  "budget": {
+    "_comment": "Stage 42 — Per-subsystem CPU/memory budgets.",
+    "fallback_enable": true,
+    "motor": {
+      "max_ik_iters": 64,
+      "max_constraint_iters": 32,
+      "max_ragdoll_bodies": 8
+    },
+    "audio": {
+      "max_resonators": 24,
+      "max_modes_per_resonator": 16,
+      "max_impulses_per_second": 120
+    },
+    "deform": {
+      "max_chunks": 128,
+      "max_stamps_per_second": 200,
+      "max_gpu_uploads_per_frame": 8
+    },
+    "net": {
+      "max_bps": 65536,
+      "max_stamp_batches_per_sec": 20
+    }
+  },
+  "telemetry": {
+    "_comment": "Stage 42 — Dev-only runtime telemetry.",
+    "enable_dev": false,
+    "ringbuffer_sec": 60
   }
 }
