@@ -1019,5 +1019,56 @@
     "cache": {
       "max_active_chunks": 16
     }
+  },
+  "perception": {
+    "_comment": "Stage 37 — Perception Field (nervous system for MotorStack).",
+    "tick_hz": 20,
+    "_comment_tick_hz": "Default sub-field update rate [Hz] when not overridden per-field.",
+    "audio_hz": 20,
+    "_comment_audio_hz": "AudioSalienceField update rate [Hz].",
+    "ground_hz": 10,
+    "_comment_ground_hz": "GroundStabilityField update rate [Hz].",
+    "wind_hz": 10,
+    "_comment_wind_hz": "WindLoadField update rate [Hz].",
+    "vis_hz": 5,
+    "_comment_vis_hz": "VisibilityEstimator update rate [Hz]; visibility changes slowly.",
+    "vibration_hz": 10,
+    "_comment_vibration_hz": "VibrationField update rate [Hz].",
+    "presence_hz": 20,
+    "_comment_presence_hz": "PresenceField update rate [Hz].",
+    "smoothing_tau_sec": 0.15,
+    "_comment_smoothing_tau": "Default exponential-smoothing time constant [s] for all sub-fields.",
+    "audio": {
+      "salience_radius": 120.0,
+      "_comment_salience_radius": "Radius [m] within which audio sources contribute to salience.",
+      "lowfreq_urgency_k": 2.0,
+      "_comment_lowfreq_urgency_k": "Multiplier for low-frequency urgency contribution."
+    },
+    "ground": {
+      "slip_mu_weight": 1.5,
+      "_comment_slip_mu_weight": "Weight of friction-deficit on slip risk.",
+      "sink_weight": 1.2,
+      "_comment_sink_weight": "Weight of softness on sink risk."
+    },
+    "wind": {
+      "load_k": 1.0,
+      "_comment_load_k": "Scale factor for wind load computation."
+    },
+    "visibility": {
+      "weight": 1.0,
+      "_comment_weight": "Overall multiplier for computed visibility [0..1]."
+    },
+    "vibration": {
+      "weight": 1.0,
+      "_comment_weight": "Scale factor for vibration level output."
+    },
+    "presence": {
+      "radius": 20.0,
+      "_comment_radius": "Radius [m] within which other players contribute to presence field."
+    },
+    "assist": {
+      "opportunity_radius": 8.0,
+      "_comment_opportunity_radius": "Radius [m] within which an assist opportunity is considered."
+    }
   }
 }
