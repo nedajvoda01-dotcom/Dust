@@ -1100,7 +1100,6 @@
     "max_stance_bias": 0.9,
     "_comment_max_stance_bias": "Maximum stanceWidthBias value that can be applied under high-risk conditions [0..1]."
   },
-
   "social": {
     "_comment": "Stage 39 — Emergent Social Coupling (SocialCoupler).",
     "tick_hz": 5,
@@ -1123,5 +1122,34 @@
     "_comment_collision_min_dist": "Minimum safe separation distance [m] for CollisionYield.",
     "mode_hysteresis_margin": 0.1,
     "_comment_mode_hysteresis_margin": "Global offset applied to all social-mode enter/exit thresholds."
+  },
+  "grasp": {
+    "_comment": "Stage 40 — Constraint-Based Multi-Agent Grasping.",
+    "enable": true,
+    "_comment_enable": "Master switch for the grasp system.",
+    "reach_radius": 2.0,
+    "_comment_reach_radius": "Maximum reach distance [m] for establishing a grasp.",
+    "score_threshold": 0.35,
+    "_comment_score_threshold": "Minimum GraspOpportunityDetector score to trigger ReachPlanner.",
+    "max_force": 800.0,
+    "_comment_max_force": "Maximum constraint force [N, normalised] before clamping.",
+    "break_force": 1200.0,
+    "_comment_break_force": "Force magnitude [N] that breaks a grasp constraint.",
+    "damping": 0.85,
+    "_comment_damping": "Velocity damping coefficient at the constraint joint.",
+    "pull_bias_max": 0.6,
+    "_comment_pull_bias_max": "Maximum pull-bias value the helper can apply [0..1].",
+    "pull_bias_tau": 2.0,
+    "_comment_pull_bias_tau": "Pull-bias ramp-up time constant [s].",
+    "server_confirm_timeout_ms": 200.0,
+    "_comment_server_confirm_timeout_ms": "Time [ms] client waits for server constraint confirmation.",
+    "max_active_per_player": 1,
+    "_comment_max_active_per_player": "Max simultaneous grasps per player (MVP=1).",
+    "com_margin_min": 0.15,
+    "_comment_com_margin_min": "Minimum COM-to-support-edge clearance before aborting reach.",
+    "max_constraint_solve_iterations": 4,
+    "_comment_max_constraint_solve_iterations": "Solver iterations budget per physics tick.",
+    "ttc_max_sec": 3.0,
+    "_comment_ttc_max_sec": "Maximum time-to-contact horizon [s] for opportunity scoring."
   }
 }
