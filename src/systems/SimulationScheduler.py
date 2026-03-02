@@ -21,7 +21,8 @@ SimulationScheduler
     3. ClimateSystem        — fixed-step at ``climate_fixed_dt``
     4. Geology (Tectonic)   — fixed-step at ``geology_tick_seconds``
     5. GeoEventSystem       — fixed-step at ``geoevent_tick_seconds``
-    6. Job queue            — up to ``job_budget_ms`` / ``job_max_per_frame``
+    6. LongHorizonEvolution — fixed-step at ``evo.tick_seconds`` (Stage 30)
+    7. Job queue            — up to ``job_budget_ms`` / ``job_max_per_frame``
 
     Spiral-of-death protection: each fixed-step system is limited to
     ``_MAX_STEPS_PER_FRAME`` sub-steps per frame; the accumulator is reset
@@ -166,6 +167,7 @@ class SchedulerLog:
         self.insolation_updates: int = 0
         self.geology_ticks: int = 0
         self.geoevent_ticks: int = 0
+        self.evolution_ticks: int = 0
         self.jobs_completed: int = 0
 
     # ------------------------------------------------------------------
@@ -182,6 +184,7 @@ class SchedulerLog:
             f"insol={self.insolation_updates} "
             f"geo={self.geology_ticks} "
             f"events={self.geoevent_ticks} "
+            f"evo={self.evolution_ticks} "
             f"jobs={self.jobs_completed}",
         )
         self._last_log_sim_time = sim_time
@@ -189,6 +192,7 @@ class SchedulerLog:
         self.insolation_updates = 0
         self.geology_ticks = 0
         self.geoevent_ticks = 0
+        self.evolution_ticks = 0
         self.jobs_completed = 0
 
 
@@ -252,6 +256,7 @@ class SimulationScheduler:
         self.climate: Any = None       # ClimateSystem — update(dt, insolation)
         self.geology: Any = None       # TectonicPlatesSystem — update(dt)
         self.geo_events: Any = None    # GeoEventSystem — update_with_dt(dt, game_time, player_pos)
+        self.evolution: Any = None     # LongHorizonEvolutionSystem — update(dt, coupler, climate)
 
         # -- Fixed-step accumulators --
         self._insolation_accum: float = 0.0
@@ -264,6 +269,7 @@ class SimulationScheduler:
         self._geology_tick: int = 0
         self._geoevent_tick: int = 0
         self._insolation_tick: int = 0
+        self._evolution_tick: int = 0
 
         # LOD divisor tick (increments with each climate tick)
         self._lod_tick: int = 0
@@ -303,6 +309,11 @@ class SimulationScheduler:
     def geoevent_tick_count(self) -> int:
         """Total number of geo-event ticks executed so far."""
         return self._geoevent_tick
+
+    @property
+    def evolution_tick_count(self) -> int:
+        """Total number of evolution ticks executed so far."""
+        return self._evolution_tick
 
     @property
     def insolation_update_count(self) -> int:
@@ -419,7 +430,23 @@ class SimulationScheduler:
             self._log.geoevent_ticks += 1
 
         # ------------------------------------------------------------------
-        # 6. Budgeted job queue — process within frame budget
+        # 6. LongHorizonEvolutionSystem — slow fixed tick (Stage 30)
+        # ------------------------------------------------------------------
+        if self.evolution is not None:
+            evo_tick_s = float(getattr(self.evolution, "_tick_seconds", 60.0))
+            self.evolution.update(
+                dt=game_dt,
+                sim_time=sim_time,
+            )
+            # Count ticks via the system's own tick_index delta
+            new_evo_tick = getattr(self.evolution, "_tick_index", 0)
+            delta_ticks = new_evo_tick - self._evolution_tick
+            if delta_ticks > 0:
+                self._evolution_tick = new_evo_tick
+                self._log.evolution_ticks += delta_ticks
+
+        # ------------------------------------------------------------------
+        # 7. Budgeted job queue — process within frame budget
         # ------------------------------------------------------------------
         self.job_queue.process_jobs(
             max_ms=self._job_budget_ms,
