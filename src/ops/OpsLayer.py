@@ -445,6 +445,13 @@ class OpsLayer:
                     json.dumps(evo_snap, indent=2), encoding="utf-8"
                 )
 
+            # mega_state.json (Stage 33)
+            mega_snap = self._world_state.load_mega_state()
+            if mega_snap is not None:
+                (bld / "mega_state.json").write_text(
+                    json.dumps(mega_snap, indent=2), encoding="utf-8"
+                )
+
             # geo_events.snapshot
             geo_events = self._world_state.geo_events()
             (bld / "geo_events.snapshot").write_text(
