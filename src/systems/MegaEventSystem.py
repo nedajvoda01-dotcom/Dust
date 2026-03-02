@@ -235,8 +235,8 @@ class MegaEvent:
         if phase == MegaEventPhase.ONSET:
             return _lerp(0.3, 1.0, _smooth(frac))
         if phase == MegaEventPhase.PEAK:
-            # Slight pulsing around full intensity
-            return 0.85 + 0.15 * _smooth(math.sin(frac * math.pi))
+            # Slight pulsing around full intensity; clamped to [0, 1].
+            return _clamp(0.85 + 0.15 * _smooth(math.sin(frac * math.pi)))
         # AFTERMATH — decay from 1 to 0
         return _lerp(0.9, 0.0, _smooth(frac))
 
@@ -411,7 +411,7 @@ class MegaEventScheduler:
         raw = hashlib.md5(
             struct.pack(">QQ", self._world_seed & 0xFFFFFFFFFFFFFFFF, epoch)
         ).digest()
-        return int.from_bytes(raw[:4], "big") / 0xFFFFFFFF
+        return int.from_bytes(raw[:4], "big") / 0x100000000
 
     # ------------------------------------------------------------------
     def to_dict(self) -> Dict[str, Any]:
@@ -869,8 +869,9 @@ class MegaEventSystem:
         total_len_m = _r(50_000.0, self._rift_len_max)
         seg_len_m = total_len_m / n_segs
 
-        # Phase distribution: first 20% → ONSET, 60% → PEAK, 20% → AFTERMATH
-        # Always guarantee at least 1 ONSET segment so phase-gating logic is testable.
+        # Phase distribution: segments assigned to ONSET (first ~20%), PEAK (~60%),
+        # AFTERMATH (~20%). At least 1 ONSET segment is always guaranteed so that
+        # phase-gating logic is exercisable even for small segment counts.
         onset_boundary = max(1, int(n_segs * 0.2))
         peak_boundary  = max(onset_boundary + 1, int(n_segs * 0.8))
 

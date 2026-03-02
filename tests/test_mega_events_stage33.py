@@ -22,6 +22,7 @@ Tests
 from __future__ import annotations
 
 import json
+import math
 import os
 import sys
 import tempfile
@@ -564,7 +565,7 @@ class TestCharacterModifiers(unittest.TestCase):
         t_peak = evt.phase_start(MegaEventPhase.PEAK) + 1.0
         # Opposite side of the planet
         far_lat = -evt.anchor_lat
-        far_lon = evt.anchor_lon + 3.14159
+        far_lon = evt.anchor_lon + math.pi
         mod = sys_obj.get_character_modifiers(far_lat, far_lon, t_peak)
         self.assertAlmostEqual(mod.wind_resistance_add, 0.0, places=3)
         self.assertAlmostEqual(mod.collapse_risk_add,   0.0, places=3)
