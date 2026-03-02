@@ -438,6 +438,13 @@ class OpsLayer:
                     json.dumps(climate_snap, indent=2), encoding="utf-8"
                 )
 
+            # evolution.snapshot (Stage 30)
+            evo_snap = self._world_state.load_evolution_snapshot()
+            if evo_snap is not None:
+                (bld / "evolution.snapshot").write_text(
+                    json.dumps(evo_snap, indent=2), encoding="utf-8"
+                )
+
             # geo_events.snapshot
             geo_events = self._world_state.geo_events()
             (bld / "geo_events.snapshot").write_text(
