@@ -116,6 +116,9 @@ class PerceptionState:
     visibility:         float = 1.0
     presenceNear:       float = 0.0
     assistOpportunity:  float = 0.0
+    # Stage 38 — additional fields consumed by IntentArbitrator cost function
+    vibrationLevel:     float = 0.0
+    audioUrgency:       float = 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -286,6 +289,8 @@ class PerceptionSystem:
             visibility=self._vis.visibility,
             presenceNear=self._presence.presence_near,
             assistOpportunity=self._presence.assist_opportunity,
+            vibrationLevel=self._vibr.vibration_level,
+            audioUrgency=self._audio.audio_urgency,
         )
         return self._state
 
