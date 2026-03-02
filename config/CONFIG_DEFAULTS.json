@@ -1099,5 +1099,29 @@
     "_comment_max_speed_scale_under_risk": "Minimum speed multiplier when movementConfidence is at zero.",
     "max_stance_bias": 0.9,
     "_comment_max_stance_bias": "Maximum stanceWidthBias value that can be applied under high-risk conditions [0..1]."
+  },
+
+  "social": {
+    "_comment": "Stage 39 — Emergent Social Coupling (SocialCoupler).",
+    "tick_hz": 5,
+    "_comment_tick_hz": "SocialCoupler update rate [Hz]; 2–10 Hz per spec §13.",
+    "presence_radius": 20.0,
+    "_comment_presence_radius": "Radius [m] within which other players are socially perceived.",
+    "personal_space_min": 1.2,
+    "_comment_personal_space_min": "Minimum preferred inter-player distance [m].",
+    "personal_space_max": 3.5,
+    "_comment_personal_space_max": "Maximum preferred inter-player distance [m].",
+    "alignment_strength_max": 0.8,
+    "_comment_alignment_strength_max": "Cap on velocity-alignment strength in GroupCohesion [0..1].",
+    "follow_in_low_visibility_enable": true,
+    "_comment_follow_low_vis": "Enable Follow mode when visibility is low.",
+    "assist_prep_threshold": 0.4,
+    "_comment_assist_prep_threshold": "Minimum assistOpportunity score to enter AssistPrep mode.",
+    "yield_prediction_horizon_sec": 1.5,
+    "_comment_yield_horizon": "Look-ahead time [s] for collision trajectory prediction (§9).",
+    "collision_min_dist_m": 1.0,
+    "_comment_collision_min_dist": "Minimum safe separation distance [m] for CollisionYield.",
+    "mode_hysteresis_margin": 0.1,
+    "_comment_mode_hysteresis_margin": "Global offset applied to all social-mode enter/exit thresholds."
   }
 }
