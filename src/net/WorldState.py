@@ -8,6 +8,7 @@ layout is:
         geo_events.jsonl    — newline-delimited JSON geo-event records
         climate.json        — periodic climate snapshot (storms, dust)
         evolution.snapshot  — periodic evolution fields snapshot (Stage 30)
+        mega_state.json     — active mega-event state (Stage 33)
 
 Reset by deleting the ``world_state/`` directory (or call :meth:`reset`).
 
@@ -24,6 +25,8 @@ WorldState(state_dir="world_state")
   .load_climate_snapshot() → dict | None
   .save_evolution_snapshot(snap)                  — write evolution.snapshot
   .load_evolution_snapshot() → dict | None
+  .save_mega_state(snap)                          — write mega_state.json
+  .load_mega_state() → dict | None
 """
 from __future__ import annotations
 
@@ -40,6 +43,7 @@ _WORLD_FILE    = "world.json"
 _GEO_FILE      = "geo_events.jsonl"
 _CLIMATE_FILE  = "climate.json"
 _EVOLUTION_FILE = "evolution.snapshot"
+_MEGA_STATE_FILE = "mega_state.json"
 _SCHEMA_VERSION = 1
 
 
@@ -208,6 +212,28 @@ class WorldState:
     def load_evolution_snapshot(self) -> Optional[Dict[str, Any]]:
         """Return the last saved evolution snapshot, or *None*."""
         path = self._dir / _EVOLUTION_FILE
+        if not path.exists():
+            return None
+        try:
+            with open(path, "r", encoding="utf-8") as fh:
+                return json.load(fh)
+        except Exception:
+            return None
+
+    # ------------------------------------------------------------------
+    # Mega-event state (Stage 33)
+    # ------------------------------------------------------------------
+
+    def save_mega_state(self, snapshot: Dict[str, Any]) -> None:
+        """Persist mega-event system state to ``mega_state.json``."""
+        self._write_atomic(
+            _MEGA_STATE_FILE,
+            json.dumps(snapshot).encode("utf-8"),
+        )
+
+    def load_mega_state(self) -> Optional[Dict[str, Any]]:
+        """Return the last saved mega-event state, or *None*."""
+        path = self._dir / _MEGA_STATE_FILE
         if not path.exists():
             return None
         try:

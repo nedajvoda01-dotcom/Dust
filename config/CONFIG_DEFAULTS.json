@@ -938,5 +938,39 @@
       "lightning_gain": 0.8,
       "_comment_lightning": "Master gain [0-1] for dry-lightning thunder."
     }
+  },
+  "mega": {
+    "_comment": "Stage 33 — rare mega-events (super-storm, global veil, rift, ring anomaly)",
+    "enable": true,
+    "cooldown_hours_sim": 6.0,
+    "poisson_lambda": 0.03,
+    "pre_min_min": 5.0,
+    "pre_max_min": 30.0,
+    "onset_min_min": 1.0,
+    "onset_max_min": 10.0,
+    "peak_min_min": 10.0,
+    "peak_max_min": 60.0,
+    "aftermath_min_hours": 1.0,
+    "aftermath_max_hours": 12.0,
+    "storm": {
+      "_comment": "SUPERCELL_DUST_STORM parameters",
+      "radius_km_min": 100.0,
+      "radius_km_max": 800.0,
+      "max_macro_spawned": 8
+    },
+    "veil": {
+      "_comment": "GLOBAL_DUST_VEIL parameters",
+      "max_factor": 0.6
+    },
+    "rift": {
+      "_comment": "GREAT_RIFT parameters",
+      "segment_count_max": 20,
+      "length_km_max": 500.0,
+      "width_m_min": 50.0,
+      "width_m_max": 500.0,
+      "depth_m_min": 50.0,
+      "depth_m_max": 500.0
+    },
+    "fallback_mode": "none"
   }
 }
