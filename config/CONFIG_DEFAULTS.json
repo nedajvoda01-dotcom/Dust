@@ -1028,7 +1028,10 @@
     },
     "extrapolation_max_ms": 200,
     "_comment_extrapolation_max_ms": "Stage 58 — maximum remote-player extrapolation window before freeze (ms).",
-    "lod_distance_thresholds": [30.0, 100.0],
+    "lod_distance_thresholds": [
+      30.0,
+      100.0
+    ],
     "_comment_lod_distance_thresholds": "Stage 58 — [near_m, far_m] distance thresholds for LOD state packing."
   },
   "ops": {
@@ -1510,7 +1513,8 @@
   },
   "world": {
     "_comment": "When true, a missing world_state/ creates a fresh world on next start.",
-    "reset_on_missing_state": true
+    "reset_on_missing_state": true,
+    "reset_on_corrupt": true
   },
   "observer": {
     "_comment": "Stage 53 Observer Influence Without Agency — player as physical body in existing fields.",
@@ -1589,6 +1593,22 @@
   "snapshot": {
     "_comment": "Stage 57 — World snapshot format versioning.",
     "format_version": 1,
-    "_comment_format_version": "Increment when persisted world-state format changes."
+    "_comment_format_version": "Increment when persisted world-state format changes.",
+    "enable": true,
+    "interval_minutes": 5,
+    "baseline_interval_hours": 1,
+    "keep_baselines": 5,
+    "keep_incrementals": 20,
+    "max_disk_mb": 512,
+    "validate_on_boot": true
+  },
+  "watchdog": {
+    "_comment": "Stage 59 — Crash watchdog timer.",
+    "tick_timeout_ms": 5000
+  },
+  "rollback": {
+    "_comment": "Stage 59 — World rollback policy.",
+    "enable": true,
+    "max_depth": 3
   }
 }
