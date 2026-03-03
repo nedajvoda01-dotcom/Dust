@@ -1490,5 +1490,26 @@
     "max_influence_per_tile": 0.05,
     "influence_radius": 2.0,
     "decay_tau": 30.0
+  },
+  "energy": {
+    "enable": true,
+    "tick_hz": 0.1,
+    "max_mech_stress": 0.9,
+    "max_dust_mass": 1.0,
+    "max_ice_mass": 1.0,
+    "entropy_upper_bound": 0.8,
+    "entropy_lower_bound": 0.2,
+    "auto_normalize_k": 0.05,
+    "transfer_efficiency": 0.85,
+    "mech_per_crust_event": 0.08,
+    "mech_per_dust_event": 0.04,
+    "atmo_per_dust_event": 0.03,
+    "thermal_per_frac_event": 0.06,
+    "mech_from_frac_event": 0.04,
+    "min_mech_trigger": 0.02,
+    "dust_target_mean": 0.5,
+    "ice_thermal_threshold": 0.3,
+    "ice_melt_return_k": 0.6,
+    "wind_erosion_base": 0.4
   }
 }
