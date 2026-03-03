@@ -9,6 +9,8 @@ layout is:
         climate.json        — periodic climate snapshot (storms, dust)
         evolution.snapshot  — periodic evolution fields snapshot (Stage 30)
         mega_state.json     — active mega-event state (Stage 33)
+        patches/            — SDF patch records (one JSON file per patch)
+        baseline3d.json     — 3D world baseline (planet_radius, revisions)
 
 Reset by deleting the ``world_state/`` directory (or call :meth:`reset`).
 
@@ -27,6 +29,10 @@ WorldState(state_dir="world_state")
   .load_evolution_snapshot() → dict | None
   .save_mega_state(snap)                          — write mega_state.json
   .load_mega_state() → dict | None
+  .append_sdf_patch(patch_dict)                   — persist one SDF patch
+  .load_sdf_patches() → list[dict]                — all persisted patches
+  .save_baseline3d(baseline)                      — write baseline3d.json
+  .load_baseline3d() → dict | None
 """
 from __future__ import annotations
 
@@ -44,6 +50,8 @@ _GEO_FILE      = "geo_events.jsonl"
 _CLIMATE_FILE  = "climate.json"
 _EVOLUTION_FILE = "evolution.snapshot"
 _MEGA_STATE_FILE = "mega_state.json"
+_PATCHES_DIR   = "patches"
+_BASELINE3D_FILE = "baseline3d.json"
 _SCHEMA_VERSION = 1
 
 
@@ -234,6 +242,69 @@ class WorldState:
     def load_mega_state(self) -> Optional[Dict[str, Any]]:
         """Return the last saved mega-event state, or *None*."""
         path = self._dir / _MEGA_STATE_FILE
+        if not path.exists():
+            return None
+        try:
+            with open(path, "r", encoding="utf-8") as fh:
+                return json.load(fh)
+        except Exception:
+            return None
+
+    # ------------------------------------------------------------------
+    # SDF Patches (3D Field Core)
+    # ------------------------------------------------------------------
+
+    def append_sdf_patch(self, patch_dict: Dict[str, Any]) -> None:
+        """Persist *patch_dict* to ``patches/<patch_id>.json``.
+
+        Each patch is stored as a separate JSON file named by its ``patch_id``
+        so that the list grows incrementally and is never fully rewritten.
+        """
+        patches_dir = self._dir / _PATCHES_DIR
+        patches_dir.mkdir(parents=True, exist_ok=True)
+        patch_id = int(patch_dict.get("patch_id", 0))
+        filename = f"{patch_id:08d}.json"
+        target   = patches_dir / filename
+        fd, tmp_path = tempfile.mkstemp(dir=patches_dir, suffix=".tmp")
+        try:
+            with os.fdopen(fd, "wb") as fh:
+                fh.write(json.dumps(patch_dict).encode("utf-8"))
+            shutil.move(tmp_path, str(target))
+        except Exception:
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+            raise
+
+    def load_sdf_patches(self) -> List[Dict[str, Any]]:
+        """Return all persisted SDF patches sorted by patch_id."""
+        patches_dir = self._dir / _PATCHES_DIR
+        if not patches_dir.exists():
+            return []
+        patches: List[Dict[str, Any]] = []
+        for path in sorted(patches_dir.glob("*.json")):
+            try:
+                with open(path, "r", encoding="utf-8") as fh:
+                    patches.append(json.load(fh))
+            except Exception:
+                pass
+        return patches
+
+    # ------------------------------------------------------------------
+    # 3D Baseline (3D Field Core)
+    # ------------------------------------------------------------------
+
+    def save_baseline3d(self, baseline: Dict[str, Any]) -> None:
+        """Persist 3D world baseline to ``baseline3d.json``."""
+        self._write_atomic(
+            _BASELINE3D_FILE,
+            json.dumps(baseline).encode("utf-8"),
+        )
+
+    def load_baseline3d(self) -> Optional[Dict[str, Any]]:
+        """Return the last saved 3D baseline, or *None*."""
+        path = self._dir / _BASELINE3D_FILE
         if not path.exists():
             return None
         try:

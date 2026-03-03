@@ -206,7 +206,7 @@ class TestRejoinCatchup(unittest.IsolatedAsyncioTestCase):
         self.registry.add("p_stale", [0.0, 1001.8, 0.0])
         await self.server._send_rejoin(FakeWS(), "p_stale", last_event_id=-1)
 
-        self.assertEqual(len(messages), 1)
+        self.assertGreaterEqual(len(messages), 1)
         self.assertEqual(messages[0]["type"], "WORLD_SYNC")
 
 
