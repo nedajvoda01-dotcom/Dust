@@ -900,6 +900,39 @@
       "max_factor": 0.6
     }
   },
+  "micro": {
+    "tick_hz": 1.0,
+    "winddir_buckets": 16,
+    "max_chunks_per_tick": 8,
+    "sky_radius": 30.0,
+    "sky_num_samples": 8,
+    "shelter": {
+      "sample_distance": 50.0,
+      "num_samples_near": 8
+    },
+    "channel": {
+      "sample_radius": 15.0,
+      "threshold": 0.5
+    },
+    "dusttrap": {
+      "sample_radius": 20.0,
+      "num_samples": 8,
+      "deposition_boost": 0.4,
+      "dispersion_boost": 0.3
+    },
+    "coldbias": {
+      "cold_delta": 0.3,
+      "height_cold_k": 0.1
+    },
+    "thermal_inertia_tau": 60.0,
+    "echo": {
+      "reverb_gain": 0.8
+    },
+    "lod": {
+      "near_dist": 100.0,
+      "far_sample_reduce": 0.25
+    }
+  },
   "moon": {
     "_comment_orbit": "Multiplier on planet_radius_units.",
     "_comment_radius_mul": "Moon radius as fraction of planet radius.",
