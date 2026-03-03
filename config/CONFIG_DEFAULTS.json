@@ -1511,5 +1511,17 @@
     "ice_thermal_threshold": 0.3,
     "ice_melt_return_k": 0.6,
     "wind_erosion_base": 0.4
+  },
+  "salience": {
+    "enable": true,
+    "tick_hz": 20,
+    "smoothing_tau": 0.25,
+    "risk_weight": 0.35,
+    "scale_weight": 0.25,
+    "structural_weight": 0.2,
+    "environmental_weight": 0.2,
+    "max_camera_mod": 0.3,
+    "max_motor_bias": 0.5,
+    "max_audio_gain": 0.4
   }
 }
