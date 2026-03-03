@@ -1449,6 +1449,33 @@
     "use_service_worker": true,
     "ws_path": "/ws"
   },
+  "memory": {
+    "_comment": "Stage 51 — Emergent Memory of the World.",
+    "_comment_enable": "Enable the world memory system.",
+    "_comment_tick_hz": "Memory system update frequency (Hz). 0.1–1 Hz recommended.",
+    "_comment_k_stress": "Stress gain per unit contact force per second.",
+    "_comment_k_stress_relax": "Passive stress relaxation rate per second.",
+    "_comment_k_compact_gain": "Compaction history gain per unit force per second.",
+    "_comment_k_compact_decay": "Compaction history passive decay rate per second.",
+    "_comment_k_erosion_gain": "Erosion bias gain rate.",
+    "_comment_k_erosion_decay": "Erosion bias passive decay rate per second.",
+    "_comment_stress_threshold": "Stress level at which a tile is considered overstressed [0..1].",
+    "_comment_max_influence": "Maximum per-tick influence any memory field can exert on material/evolution.",
+    "_comment_lod_tile_limit": "Maximum number of memory tiles updated per tick (budget).",
+    "_comment_broadcast_interval_s": "simTime interval between WorldMemoryState network broadcasts.",
+    "enable": true,
+    "tick_hz": 0.5,
+    "k_stress": 0.1,
+    "k_stress_relax": 0.005,
+    "k_compact_gain": 0.08,
+    "k_compact_decay": 0.003,
+    "k_erosion_gain": 0.05,
+    "k_erosion_decay": 0.002,
+    "stress_threshold": 0.6,
+    "max_influence": 0.3,
+    "lod_tile_limit": 256,
+    "broadcast_interval_s": 60.0
+  },
   "world": {
     "_comment": "When true, a missing world_state/ creates a fresh world on next start.",
     "reset_on_missing_state": true
