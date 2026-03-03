@@ -653,6 +653,37 @@
     "server_confirm_timeout_ms": 200.0,
     "ttc_max_sec": 3.0
   },
+  "injury": {
+    "acute_decay_k": 0.05,
+    "acute_to_strain": 0.15,
+    "enable": true,
+    "impact_threshold": 0.25,
+    "k_acute": 0.6,
+    "k_strain": 0.04,
+    "lean_threshold": 0.3,
+    "load_window_sec": 1.0,
+    "max_brace_bias": 0.5,
+    "max_ds_bias": 0.25,
+    "max_step_caution": 0.8,
+    "max_total_influence": 0.6,
+    "max_weight_shift": 0.2,
+    "max_width_bias": 0.15,
+    "pain_avoidance_k": 0.08,
+    "recover_k": 0.015,
+    "repl_hz": 2,
+    "rest_condition_thresholds": {
+      "speed": 0.5,
+      "support": 0.65,
+      "wind": 0.25
+    },
+    "step_length_min": 0.6,
+    "stiffness_min": 0.7,
+    "strain_power": 2.0,
+    "tau_floor": 0.75,
+    "tau_max": 1.0,
+    "tick_hz": 5,
+    "yaw_rate_min": 0.4
+  },
   "input": {
     "_comment": "Stage 43 \u2014 WASD + mouse input system.",
     "_comment_mouse_sens": "Degrees of look rotation per raw mouse unit.",
