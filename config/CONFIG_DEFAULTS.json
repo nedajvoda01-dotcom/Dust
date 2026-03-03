@@ -1028,10 +1028,7 @@
     },
     "extrapolation_max_ms": 200,
     "_comment_extrapolation_max_ms": "Stage 58 — maximum remote-player extrapolation window before freeze (ms).",
-    "lod_distance_thresholds": [
-      30.0,
-      100.0
-    ],
+    "lod_distance_thresholds": [30.0, 100.0],
     "_comment_lod_distance_thresholds": "Stage 58 — [near_m, far_m] distance thresholds for LOD state packing."
   },
   "ops": {
@@ -1593,6 +1590,31 @@
     "_comment": "Stage 57 — World snapshot format versioning.",
     "format_version": 1,
     "_comment_format_version": "Increment when persisted world-state format changes."
+  },
+  "scale": {
+    "_comment": "Stage 60 — Production Scaling & Sharding configuration.",
+    "enable_shards": false,
+    "_comment_enable_shards": "Set true to activate multi-region shard mode.",
+    "region_size_deg": 10.0,
+    "_comment_region_size_deg": "Width/height of each region tile in degrees (lat/lon).",
+    "handoff_band_m": 2000.0,
+    "_comment_handoff_band_m": "Distance from region boundary (m) that triggers seamless handoff.",
+    "ghost_border_km": 2.0,
+    "_comment_ghost_border_km": "Depth of ghost-border chunk cache from neighbouring regions (km).",
+    "gateway_enable": false,
+    "_comment_gateway_enable": "Set true to enable gateway routing layer.",
+    "max_players_per_region_soft": 100,
+    "_comment_max_players_per_region_soft": "Soft cap: above this, degrade detail in the region.",
+    "max_players_per_region_hard": 200,
+    "_comment_max_players_per_region_hard": "Hard cap: above this, reject new players into the region.",
+    "lod_policy_levels": [30.0, 200.0, 1000.0],
+    "_comment_lod_policy_levels": "Near/Mid/Far distance thresholds (m) for hierarchical interest management.",
+    "checkpoint_interval_min": 5,
+    "_comment_checkpoint_interval_min": "Minutes between coordinated GA+RS checkpoints.",
+    "grace_period_sec": 30,
+    "_comment_grace_period_sec": "Seconds RS keeps ticking after GA goes silent before halting.",
+    "failover_enable": true,
+    "_comment_failover_enable": "Enable Global Authority standby failover."
   },
   "obs": {
     "_comment": "Stage 61 — Observability configuration.",
