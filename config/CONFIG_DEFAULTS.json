@@ -466,7 +466,10 @@
   },
   "dev": {
     "_comment_headless": "When true, disables all rendering and audio (for CI / smoke tests).",
-    "headless_mode": false
+    "_comment_qp_diag": "QP diagnostics ring-buffer size (number of ticks to keep).",
+    "enable_dev": true,
+    "headless_mode": false,
+    "qp_diag_buffer_size": 256
   },
   "env": {
     "_comment_dust_viscosity_k": "Fraction by which deep dust reduces speed.",
@@ -1031,6 +1034,7 @@
     "trails_ttl_storm_multiplier": 0.25
   },
   "qp": {
+    "_comment": "Stage 47 \u2014 Whole-Body QP Controller configuration.",
     "effort_weight": 0.01,
     "enable": true,
     "eps": 1e-06,
