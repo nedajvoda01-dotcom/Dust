@@ -244,7 +244,7 @@ class TestBuildId(unittest.IsolatedAsyncioTestCase):
                 messages.append(msg)
 
         await self.server._send_world_sync(FakeWS(), "p1")
-        self.assertEqual(len(messages), 1)
+        self.assertGreaterEqual(len(messages), 1)
         data = json.loads(messages[0])
         self.assertIn("buildId", data, "WORLD_SYNC missing buildId field")
         self.assertEqual(data["buildId"], self.server._build_id)

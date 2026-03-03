@@ -69,11 +69,18 @@ from typing import Any, Deque, Dict, List, Optional, Tuple
 from src.core.Config import Config
 from src.core.Logger import Logger
 from src.net.PlayerIdentity import make_player_key
+from src.net.PlayerPersistence import PlayerPersistence
 from src.net.PlayerRegistry import PlayerRegistry
+from src.net.ProtocolVersioning import (
+    check_compatible,
+    make_upgrade_required,
+    make_welcome,
+)
 from src.net.SpawnAnchor import SpawnAnchor
 from src.net.WorldState import WorldState
 from src.net.TrailEventProtocol import decode_trail_events, should_relay
 from src.ops.OpsLayer import OpsLayer
+from src.sim.world.World3D import World3D
 
 _TAG        = "NetworkServer"
 _CLIENT_DIR = Path(__file__).parent.parent.parent / "client"
@@ -118,12 +125,18 @@ _DEFAULT_INTERP_DELAY_MS  = 200
 _DEFAULT_MAX_EXTRAP_MS    = 150
 _DEFAULT_RESYNC_THRESHOLD = 5.0       # seconds of drift → hard resync
 _DEFAULT_PING_INTERVAL    = 10        # seconds between server→client pings
+_DEFAULT_MAX_CLIENTS      = 64        # Stage 57 — reject connections above limit
 _PLAYER_TIMEOUT_S         = 30.0
 _REJOIN_MAX_CATCHUP_EVENTS = 100      # if more, send full WORLD_SYNC
 
 # Stage 24 — ops HTTP endpoint (localhost-only)
 _OPS_HTTP_BIND            = "127.0.0.1"
 _OPS_COMPACT_INTERVAL_S   = 60.0     # how often to call maybe_compact()
+
+# Stage 57 — input sanity limits
+_INTENT_MOVE_MAX  = 1.0        # each moveVec component
+_INTENT_YAW_MAX   = math.pi    # radians per message (clamped, not rejected)
+_INTENT_PITCH_MAX = math.pi / 2
 
 
 class NetworkServer:
@@ -172,6 +185,7 @@ class NetworkServer:
         self._max_extrap_ms     = _DEFAULT_MAX_EXTRAP_MS
         self._resync_threshold  = _DEFAULT_RESYNC_THRESHOLD
         self._ping_interval     = _DEFAULT_PING_INTERVAL
+        self._max_clients       = _DEFAULT_MAX_CLIENTS   # Stage 57
         self._ws_path           = "/ws"
         self._static_dir        = _DIST_DIR
         self._enable_range      = True
@@ -199,6 +213,8 @@ class NetworkServer:
                 "net", "max_extrap_ms",         default=_DEFAULT_MAX_EXTRAP_MS))
             self._resync_threshold = float(config.get(
                 "net", "resync_hard_threshold_sec", default=_DEFAULT_RESYNC_THRESHOLD))
+            self._max_clients     = int(config.get(                     # Stage 57
+                "net", "max_clients",          default=_DEFAULT_MAX_CLIENTS))
             # Stage 23 — web/ping config
             self._ping_interval   = int(config.get(
                 "web", "ping_interval_sec",     default=_DEFAULT_PING_INTERVAL))
@@ -245,6 +261,9 @@ class NetworkServer:
         # Server salt (regenerated each run — no persistent identity)
         self._server_salt: str = secrets.token_hex(16)
 
+        # Stage 57 — stable player persistence (server-issued UUIDs)
+        self._player_persistence: PlayerPersistence = PlayerPersistence(state_dir)
+
         # Stage 23 — build ID: hash of static assets for cache-busting
         self._build_id: str = self._compute_build_id()
 
@@ -276,6 +295,25 @@ class NetworkServer:
             build_id    = self._build_id,
         )
         self._ops.set_reset_callback(self._on_world_reset)
+
+        # 3D Field Core — World3D (server-authoritative sim)
+        _seed3d = int(getattr(bootstrap, "seed", 42)) if bootstrap else 42
+        self._world3d: World3D = World3D(
+            seed          = _seed3d,
+            planet_radius = planet_r,
+        )
+        # Reload persisted SDF patches if any exist
+        _saved_patches = self._world_state.load_sdf_patches()
+        for _pd in _saved_patches:
+            from src.sim.sdf.SDFPatch import SDFPatch as _SDFPatch
+            try:
+                self._world3d.sdf_volume.apply_patch(_SDFPatch.from_dict(_pd))
+            except Exception:
+                pass
+        # Track last patch revision sent to each client {player_id: revision}
+        self._client_sdf_revision: Dict[str, int] = {}
+        # Track last body revision sent to each client {player_id: revision}
+        self._client_body_revision: Dict[str, int] = {}
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -574,13 +612,50 @@ class NetworkServer:
         except Exception:
             pass
 
-        player_id  = make_player_key(remote_ip, user_agent, self._server_salt)
-        Logger.info(_TAG, f"Connect: id={player_id} ip={remote_ip}")
+        # Stage 57 — enforce max-client cap before registering
+        if len(self._connections) >= self._max_clients:
+            Logger.warn(_TAG,
+                f"Max clients ({self._max_clients}) reached — rejecting {remote_ip}")
+            try:
+                await ws.send(json.dumps({
+                    "type":      "SERVER_FULL",
+                    "maxClients": self._max_clients,
+                }))
+                await ws.close()
+            except Exception:
+                pass
+            return
+
+        player_id = make_player_key(remote_ip, user_agent, self._server_salt)
+
+        # Stage 57 — get/create stable player UUID
+        stable_id = self._player_persistence.get_or_create(player_id)
+
+        Logger.info(_TAG, f"Connect: id={player_id} ip={remote_ip} stableId={stable_id}")
+
+        # Stage 57 — send WELCOME as first message (protocol version + stable ID)
+        try:
+            await ws.send(json.dumps(make_welcome(
+                world_id           = self._world_state.world_id,
+                world_seed         = self._world_state.seed,
+                world_epoch        = self._world_state.epoch,
+                assigned_player_id = stable_id,
+                build_id           = self._build_id,
+            )))
+        except Exception:
+            return
+
+        # Update spawn anchor toward average of active players (Stage 57 spawn-near)
+        self._update_spawn_anchor_to_active_players()
 
         spawn_pos = self._anchor.get_spawn_for_player(player_id)
         self._registry.add(player_id, spawn_pos)
         self._connections[player_id] = ws
         self._ws_to_player[id(ws)]   = player_id
+        # Register player in World3D with the same spawn position
+        self._world3d.add_player(player_id)
+        if spawn_pos:
+            self._world3d.set_intent(player_id, {})
 
         try:
             await self._send_world_sync(ws, player_id)
@@ -597,10 +672,34 @@ class NetworkServer:
             pass
         finally:
             Logger.info(_TAG, f"Disconnect: id={player_id}")
+            self._player_persistence.update_last_seen(player_id)
             self._registry.remove(player_id)
+            self._world3d.remove_player(player_id)
             self._connections.pop(player_id, None)
             self._ws_to_player.pop(id(ws), None)
             self._rate_windows.pop(player_id, None)
+            self._client_sdf_revision.pop(player_id, None)
+            self._client_body_revision.pop(player_id, None)
+
+    def _update_spawn_anchor_to_active_players(self) -> None:
+        """Nudge the spawn anchor toward the centroid of active players.
+
+        New players will spawn near existing ones (Stage 57 spawn policy).
+        If no players are online, the anchor stays at its default position.
+        """
+        active_positions = [
+            r.pos for r in self._registry.all_players()
+            if r.pos is not None
+        ]
+        if not active_positions:
+            return
+        cx = sum(p[0] for p in active_positions) / len(active_positions)
+        cy = sum(p[1] for p in active_positions) / len(active_positions)
+        cz = sum(p[2] for p in active_positions) / len(active_positions)
+        # Normalise back onto the planet surface
+        dist = math.sqrt(cx * cx + cy * cy + cz * cz) or 1.0
+        r    = self._world3d.planet_radius + 1.8   # surface + hover
+        self._anchor.anchor = [cx / dist * r, cy / dist * r, cz / dist * r]
 
     # ------------------------------------------------------------------
     # Rate limiting
@@ -673,6 +772,67 @@ class NetworkServer:
             ):
                 self._registry.update(player_id, pos, vel, flags)
 
+        elif msg_type == "HELLO":
+            # Stage 57 — client handshake (may arrive any time, not just first)
+            client_ver  = int(msg.get("protocolVersion", 0))
+            hint_pid    = str(msg.get("playerId", ""))
+            if not check_compatible(client_ver):
+                try:
+                    await ws.send(json.dumps(make_upgrade_required()))
+                except Exception:
+                    pass
+            else:
+                # Validate/reuse hint playerId if provided
+                if hint_pid:
+                    self._player_persistence.get_or_create(player_id, hint_pid)
+                # Reply with WELCOME (refreshed with latest state)
+                stable_id = self._player_persistence.get_or_create(player_id)
+                try:
+                    await ws.send(json.dumps(make_welcome(
+                        world_id           = self._world_state.world_id,
+                        world_seed         = self._world_state.seed,
+                        world_epoch        = self._world_state.epoch,
+                        assigned_player_id = stable_id,
+                        build_id           = self._build_id,
+                    )))
+                except Exception:
+                    pass
+
+        elif msg_type == "INTENT":
+            # 3D Field Core — forward movement intent to World3D
+            move_vec = msg.get("moveVec")
+            if not isinstance(move_vec, list) or len(move_vec) < 2:
+                move_vec = [0.0, 0.0]
+            # Stage 57 — sanity-clamp input values; reject on non-numeric input
+            try:
+                mx = max(-_INTENT_MOVE_MAX, min(_INTENT_MOVE_MAX, float(move_vec[0])))
+                mz = max(-_INTENT_MOVE_MAX, min(_INTENT_MOVE_MAX, float(move_vec[1])))
+                raw_yaw   = float(msg.get("lookYaw",   0.0))
+                raw_pitch = float(msg.get("lookPitch", 0.0))
+            except (TypeError, ValueError):
+                return   # malformed input — drop silently
+            if not math.isfinite(raw_yaw) or not math.isfinite(raw_pitch):
+                return
+            intent = {
+                "move_x":     mx,
+                "move_z":     mz,
+                "look_yaw":   raw_yaw,   # full rotation allowed; no clamp
+                "look_pitch": max(-_INTENT_PITCH_MAX,
+                                  min(_INTENT_PITCH_MAX, raw_pitch)),
+                "ctrl":       int(msg.get("ctrl", 0)),
+                "r":          bool(msg.get("r", False)),
+            }
+            self._world3d.set_intent(player_id, intent)
+            # Also update the legacy registry (for interest filtering)
+            player_state = self._world3d.get_player_state(player_id)
+            if player_state:
+                self._registry.update(
+                    player_id,
+                    player_state["pos"],
+                    player_state["vel"],
+                    0,
+                )
+
         elif msg_type == "PING":
             # Reflect timestamp back so the client can measure RTT
             try:
@@ -684,8 +844,9 @@ class NetworkServer:
                 pass
 
         elif msg_type == "REJOIN_RESYNC":
-            last_event_id = int(msg.get("lastEventId", -1))
-            await self._send_rejoin(ws, player_id, last_event_id)
+            last_event_id       = int(msg.get("lastEventId",      -1))
+            last_patch_revision = int(msg.get("lastPatchRevision", -1))
+            await self._send_rejoin(ws, player_id, last_event_id, last_patch_revision)
 
         elif msg_type == "TRAIL_BATCH":
             # Stage 25 — relay trail events to nearby players (interest-based)
@@ -712,12 +873,60 @@ class NetworkServer:
         })
         await ws.send(msg)
 
+        # 3D Field Core — send WORLD_BASELINE immediately after WORLD_SYNC
+        await self._send_world_baseline(ws, player_id)
+
+    async def _send_world_baseline(self, ws, player_id: str) -> None:
+        """Send WORLD_BASELINE to *player_id* on join or full resync.
+
+        Includes:
+          * planet radius + seed
+          * current sdf_revision and fields_revision
+          * all existing SDF patches (for initial world shape)
+          * fields snapshot parameters
+          * body graph for this player
+        """
+        baseline = self._world3d.to_baseline_dict()
+        all_patches = [p.to_dict() for p in self._world3d.sdf_volume.all_patches()]
+
+        # Ensure player exists in World3D
+        self._world3d.add_player(player_id)
+        body = self._world3d.get_body(player_id)
+        body_dict = body.to_dict() if body else {}
+
+        try:
+            await ws.send(json.dumps({
+                "type":            "WORLD_BASELINE",
+                "worldId":         self._world_state.world_id,
+                "seed":            baseline["seed"],
+                "planetRadius":    baseline["planet_radius"],
+                "simTime":         baseline["sim_time"],
+                "sdfRevision":     baseline["sdf_revision"],
+                "fieldsRevision":  baseline["fields_revision"],
+                "sdfPatches":      all_patches,
+                "fieldsSnapshot":  self._world3d.field_set.to_snapshot_dict(),
+                "bodyGraph":       body_dict,
+                "activeZone":      baseline["active_zone"],
+            }))
+        except Exception:
+            pass
+
+        # Record that this client is now up-to-date on these revisions
+        self._client_sdf_revision[player_id]  = baseline["sdf_revision"]
+        self._client_body_revision[player_id] = body_dict.get("body_revision", 0)
+
     # ------------------------------------------------------------------
     # REJOIN_RESYNC — delta or full re-sync
     # ------------------------------------------------------------------
 
-    async def _send_rejoin(self, ws, player_id: str, last_event_id: int) -> None:
-        """Send catch-up events or a full WORLD_SYNC if the client is too stale."""
+    async def _send_rejoin(
+        self,
+        ws,
+        player_id: str,
+        last_event_id: int,
+        last_patch_revision: int = -1,
+    ) -> None:
+        """Send catch-up events (and SDF patches) or a full WORLD_SYNC if too stale."""
         all_events = self._world_state.geo_events()
         new_events = [
             e for e in all_events
@@ -725,16 +934,25 @@ class NetworkServer:
         ]
 
         if len(new_events) > _REJOIN_MAX_CATCHUP_EVENTS:
-            # Too stale: send a full WORLD_SYNC instead
+            # Too stale: send a full WORLD_SYNC + WORLD_BASELINE
             await self._send_world_sync(ws, player_id)
         else:
+            # SDF patch delta
+            new_patches = [
+                p.to_dict()
+                for p in self._world3d.sdf_volume.patches_since(last_patch_revision)
+            ]
             try:
                 await ws.send(json.dumps({
                     "type":          "REJOIN_RESYNC",
                     "simTime":       self._world_state.sim_time,
                     "epoch":         self._world_state.epoch,
                     "catchupEvents": new_events,
+                    "sdfPatches":    new_patches,
+                    "sdfRevision":   self._world3d.sdf_volume.sdf_revision,
                 }))
+                self._client_sdf_revision[player_id] = \
+                    self._world3d.sdf_volume.sdf_revision
             except Exception:
                 pass
 
@@ -798,7 +1016,10 @@ class NetworkServer:
     # ------------------------------------------------------------------
 
     async def _world_tick_loop(self) -> None:
-        """Broadcast WORLD_TICK at *tick_hz_world* Hz."""
+        """Broadcast WORLD_TICK at *tick_hz_world* Hz.
+
+        Also ticks World3D and broadcasts any new SDF patches.
+        """
         interval = 1.0 / max(1, self._tick_hz_world)
         while self._running:
             await asyncio.sleep(interval)
@@ -817,11 +1038,47 @@ class NetworkServer:
                 ev = self._pending_geo.pop(0)
                 await self._broadcast(json.dumps({"type": "GEO_EVENT", **ev}))
 
+            # 3D Field Core — tick World3D and broadcast new SDF patches
+            new_patches = self._world3d.tick(interval)
+            if new_patches:
+                # Persist patches to disk
+                for patch in new_patches:
+                    try:
+                        self._world_state.append_sdf_patch(patch.to_dict())
+                    except Exception:
+                        pass
+
+                # Broadcast SDF_PATCH_BATCH to all connected clients
+                patch_dicts = [p.to_dict() for p in new_patches]
+                patch_msg = json.dumps({
+                    "type":        "SDF_PATCH_BATCH",
+                    "patches":     patch_dicts,
+                    "sdfRevision": self._world3d.sdf_volume.sdf_revision,
+                })
+                await self._broadcast(patch_msg)
+                # Update per-client revision tracking
+                new_rev = self._world3d.sdf_volume.sdf_revision
+                for pid in list(self._connections):
+                    self._client_sdf_revision[pid] = new_rev
+
+            # Broadcast PLAYER_SNAPSHOT from World3D every world tick
+            player_states = self._world3d.all_player_states()
+            if player_states:
+                await self._broadcast(json.dumps({
+                    "type":    "PLAYER_SNAPSHOT",
+                    "players": player_states,
+                }))
+
             # Periodic climate snapshot
             now = time.monotonic()
             if now - self._last_snap >= self._snap_interval:
                 self._last_snap = now
                 await self._broadcast_climate_snap()
+                # Also broadcast fields snapshot
+                await self._broadcast(json.dumps({
+                    "type":          "FIELDS_SNAPSHOT",
+                    "fieldsSnapshot": self._world3d.field_set.to_snapshot_dict(),
+                }))
 
     async def _player_bcast_loop(self) -> None:
         """Send PLAYERS to each client filtered by interest (sector proximity).
@@ -1018,12 +1275,20 @@ class NetworkServer:
 
         Called by OpsLayer after the world has been re-initialised.
         Clients auto-reconnect and receive a fresh WORLD_SYNC.
+        Includes ``worldEpoch`` so clients can detect the reset even if the
+        worldId collision probability is non-zero (it isn't, but be explicit).
         """
         Logger.info(_TAG, f"World reset → new worldId={new_world_id}")
+        # Stage 57 — also reset World3D to the new seed
+        try:
+            self._world3d = World3D(seed=new_seed, planet_radius=self._world3d.planet_radius)
+        except Exception:
+            pass
         msg = json.dumps({
             "type":       "SERVER_WORLD_RESET",
             "newWorldId": new_world_id,
             "newSeed":    new_seed,
             "newSimTime": new_sim_time,
+            "worldEpoch": self._world_state.epoch,   # Stage 57
         })
         await self._broadcast(msg)

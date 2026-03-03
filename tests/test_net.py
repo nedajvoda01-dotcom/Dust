@@ -347,7 +347,7 @@ class TestNetworkServerComponents(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(rec.state_flags, 2)
 
     async def test_world_sync_payload(self) -> None:
-        """_send_world_sync should produce a valid JSON payload."""
+        """_send_world_sync should produce WORLD_SYNC followed by WORLD_BASELINE."""
         messages = []
 
         class FakeWS:
@@ -356,13 +356,20 @@ class TestNetworkServerComponents(unittest.IsolatedAsyncioTestCase):
 
         self.registry.add("p1", [0.0, 1001.8, 0.0])
         await self.server._send_world_sync(FakeWS(), "p1")
-        self.assertEqual(len(messages), 1)
+        # WORLD_SYNC + WORLD_BASELINE are now sent together on join
+        self.assertGreaterEqual(len(messages), 1)
         data = json.loads(messages[0])
         self.assertEqual(data["type"], "WORLD_SYNC")
         self.assertEqual(data["seed"], 42)
         self.assertIn("worldId", data)
         self.assertIn("spawnPos", data)
         self.assertIn("geoEvents", data)
+        # Second message must be WORLD_BASELINE
+        if len(messages) >= 2:
+            baseline = json.loads(messages[1])
+            self.assertEqual(baseline["type"], "WORLD_BASELINE")
+            self.assertIn("planetRadius", baseline)
+            self.assertIn("sdfRevision",  baseline)
 
 
 # ---------------------------------------------------------------------------

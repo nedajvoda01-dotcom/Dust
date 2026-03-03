@@ -997,7 +997,13 @@
     "tick_hz_players": 20,
     "tick_hz_world": 5,
     "world_tick_hz": 5,
-    "ws_port": 8765
+    "ws_port": 8765,
+    "max_clients": 64,
+    "_comment_max_clients": "Stage 57 — maximum concurrent WebSocket connections.",
+    "spawn_radius_min": 5.0,
+    "_comment_spawn_radius_min": "Stage 57 — minimum spawn scatter radius (metres).",
+    "spawn_radius_max": 30.0,
+    "_comment_spawn_radius_max": "Stage 57 — maximum spawn scatter radius (metres)."
   },
   "ops": {
     "_comment": "Stage 24 — operational layer configuration.",
@@ -1548,5 +1554,15 @@
     ],
     "check_interval_sec": 5.0,
     "total_ticks": 1800
+  },
+  "protocol": {
+    "_comment": "Stage 57 — WebSocket protocol versioning.",
+    "version": 1,
+    "_comment_version": "Current protocol revision. Increment on breaking schema changes."
+  },
+  "snapshot": {
+    "_comment": "Stage 57 — World snapshot format versioning.",
+    "format_version": 1,
+    "_comment_format_version": "Increment when persisted world-state format changes."
   }
 }
