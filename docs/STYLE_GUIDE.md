@@ -1,4 +1,4 @@
-# BARYCENTER — Style Guide
+# DUST — Style Guide
 
 This document defines hard visual rules. Any rendering decision that conflicts with these rules is invalid, regardless of technical convenience.
 
