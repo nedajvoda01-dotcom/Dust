@@ -358,9 +358,9 @@ class TestLatencySimulated150msStillPlayable(unittest.TestCase):
 
         frames_sent = 0
         dt = 1.0 / 60.0
-        # Use direct multiplication to avoid floating-point accumulation drift
-        for i in range(1, 121):  # 2 seconds at 60 Hz
-            now_s = i * dt
+        # Compute timestamps directly from integer index to avoid any drift
+        for i in range(1, 121):  # ticks 1..120 → 2 seconds at 60 Hz
+            now_s = round(i * dt, 10)
             f = sender.tick(now_s)
             if f:
                 frames_sent += 1
@@ -462,7 +462,7 @@ class TestDriftSuitePassesWithPrediction(unittest.TestCase):
             sim.snap_to(new_pos, new_vel, new_yaw)
 
         final_error = abs(sim.pos[0] - server_x)
-        self.assertLess(final_error, 0.5,
+        self.assertLess(final_error, 0.1,
                         f"Predicted state did not converge: error = {final_error:.3f} m")
 
 
