@@ -170,8 +170,25 @@ window.addEventListener("mousemove", (e) => {
 });
 
 // ──────────────────────────────────────────────────────────────────────────
+// Stage 57 — Stable player ID (server-issued, stored in localStorage)
+// ──────────────────────────────────────────────────────────────────────────
+const _PLAYER_ID_KEY     = "dust_player_id";
+const _CLIENT_PROTO_VER  = 1;          // must match server ProtocolVersioning.py
+
+function _loadStoredPlayerId() {
+  try { return localStorage.getItem(_PLAYER_ID_KEY) || ""; }
+  catch (e) { return ""; }
+}
+function _savePlayerId(id) {
+  try { localStorage.setItem(_PLAYER_ID_KEY, id); } catch (e) {}
+}
+
+let _storedPlayerId = _loadStoredPlayerId();
+let _worldEpoch     = 0;   // Stage 57 — increments on world reset
+// ──────────────────────────────────────────────────────────────────────────
 // Network worker
 // ──────────────────────────────────────────────────────────────────────────
+
 let _worker = null;
 let _sendQ  = [];
 
@@ -212,6 +229,13 @@ function _onWorkerMessage(ev) {
   switch (type) {
     case "WS_OPEN":
       console.info("[Dust] WebSocket open");
+      // Stage 57 — send HELLO with stored playerId for stable identity
+      _send({
+        type:            "HELLO",
+        protocolVersion: _CLIENT_PROTO_VER,
+        playerId:        _storedPlayerId,
+      });
+      // Legacy JOIN for backward compat with pre-Stage-57 servers
       _send({ type: "JOIN" });
       _stage = Stage.WorldHandshake;
       break;
@@ -238,6 +262,61 @@ function _onServerMsg(msg) {
   if (!msg || !msg.type) return;
 
   switch (msg.type) {
+    case "WELCOME": {
+      // Stage 57 — first message from server, carries stable playerId
+      const assignedId = msg.assignedPlayerId;
+      if (assignedId && assignedId !== _storedPlayerId) {
+        _storedPlayerId = assignedId;
+        _savePlayerId(assignedId);
+        console.info("[Dust] WELCOME — assigned playerId:", assignedId);
+      }
+      _worldEpoch = msg.worldEpoch ?? 0;
+      _checkBuildId(msg.buildId);
+      // Server protocol version check
+      if (msg.protocolVersion && msg.protocolVersion !== _CLIENT_PROTO_VER) {
+        console.warn("[Dust] Protocol mismatch — client", _CLIENT_PROTO_VER,
+                     "server", msg.protocolVersion);
+      }
+      console.info("[Dust] WELCOME received — proto v" + msg.protocolVersion +
+                   " world=" + msg.worldId + " epoch=" + _worldEpoch);
+      break;
+    }
+
+    case "UPGRADE_REQUIRED": {
+      // Stage 57 — server wants us to reload to get latest client
+      console.warn("[Dust] UPGRADE_REQUIRED — server proto v" +
+                   msg.currentProtocolVersion + ", reloading…");
+      const now = Date.now();
+      if (now - _lastReloadAttempt < AUTO_RELOAD_THROTTLE) break;
+      _lastReloadAttempt = now;
+      location.reload();
+      break;
+    }
+
+    case "SERVER_FULL": {
+      // Stage 57 — server is at capacity
+      console.warn("[Dust] Server full (max", msg.maxClients, "clients)");
+      break;
+    }
+
+    case "SERVER_WORLD_RESET": {
+      // Stage 57 — world was reset; clear caches and re-handshake
+      const newEpoch = msg.worldEpoch ?? 0;
+      console.info("[Dust] SERVER_WORLD_RESET — epoch", newEpoch,
+                   "worldId", msg.newWorldId);
+      if (newEpoch > _worldEpoch) {
+        _worldEpoch = newEpoch;
+      }
+      // Clear SDF patch cache and remote players
+      world.sdfPatches  = [];
+      world.sdfRevision = 0;
+      remotePlayers.clear();
+      _lastPatchRevision = -1;
+      // Re-enter handshake — server will send fresh WORLD_SYNC + WORLD_BASELINE
+      _stage = Stage.WorldHandshake;
+      break;
+    }
+
     case "WORLD_SYNC": {
       world.seed      = msg.seed;
       world.worldId   = msg.worldId;

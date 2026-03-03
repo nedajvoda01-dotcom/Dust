@@ -134,6 +134,11 @@ class World3D:
     def material_db(self) -> MaterialDB:
         return self._material_db
 
+    @property
+    def planet_radius(self) -> float:
+        """Planet radius in metres."""
+        return self._planet_radius
+
     # ------------------------------------------------------------------
     # Player management
     # ------------------------------------------------------------------
