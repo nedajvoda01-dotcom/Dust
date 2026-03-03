@@ -1309,5 +1309,33 @@
     "crust_push_reduction": 0.75,
     "snapshot_quantization": 8,
     "update_hz": 0.5
+  },
+
+  "audio_world": {
+    "_comment": "Stage 46 — Long-range Acoustic World Model.",
+    "max_emitters": 256,
+    "_comment_max_emitters": "Hard cap on simultaneous AcousticEmitterRecord instances processed per tick.",
+    "max_raycasts_per_sec": 100,
+    "_comment_max_raycasts": "Budget for terrain occlusion raycasts per second.",
+    "occlusion_cache_ttl_sec": 1.0,
+    "_comment_occlusion_ttl": "How long (seconds) an occlusion result is reused before a fresh raycast.",
+    "valley_gain_min": 0.8,
+    "_comment_valley_min": "Gain multiplier for sound on an open ridge (disperses sound).",
+    "valley_gain_max": 1.3,
+    "_comment_valley_max": "Gain multiplier for sound inside a deep valley/crater (channels sound).",
+    "dust_lowpass_k": 2.0,
+    "_comment_dust_lp": "Dust-density low-pass strength in the acoustic world model.",
+    "wind_snr_k": 1.5,
+    "_comment_wind_snr": "Wind-speed SNR degradation coefficient.",
+    "infra_decay_tau": 4.0,
+    "_comment_infra_tau": "Infrasound energy decay time-constant in seconds.",
+    "lod": {
+      "near_dist": 50.0,
+      "_comment_near": "Distance (m) below which emitters update at full rate (30-60 Hz).",
+      "mid_dist": 200.0,
+      "_comment_mid": "Distance (m) below which emitters update at mid rate (10-20 Hz).",
+      "far_update_hz": 3.0,
+      "_comment_far": "Update rate (Hz) for emitters beyond mid_dist."
+    }
   }
 }
