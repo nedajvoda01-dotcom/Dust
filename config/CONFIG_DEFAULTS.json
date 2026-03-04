@@ -1,5 +1,5 @@
 {
-  "_comment": "BARYCENTER — Default parameter ranges. Values are starting points, not final physics. All systems read from this file; no magic numbers in code.",
+  "_comment": "BARYCENTER \u2014 Default parameter ranges. Values are starting points, not final physics. All systems read from this file; no magic numbers in code.",
   "anim": {
     "_comment_blend": "Easing function used for action-layer blend weights. Currently: ease_in_out.",
     "_comment_cadence": "Base gait cadence (cycles per game-second). Scaled by AnimParamFrame.cadence.",
@@ -8,7 +8,7 @@
     "_comment_hand_bias": "Probability [0..1] of choosing the left hand for brace. 0.5 = equal chance.",
     "_comment_ik": "Maximum iterations for 2-bone IK solver. 1-2 is sufficient for FK-seeded solutions.",
     "_comment_jitter": "Peak angular micro-jitter (radians) applied to head at max micro_jitter intensity.",
-    "_comment_squash": "Maximum pelvis scale deviation for squash/stretch (e.g. 0.07 = ±7%).",
+    "_comment_squash": "Maximum pelvis scale deviation for squash/stretch (e.g. 0.07 = \u00b17%).",
     "_comment_stance_w": "Lateral distance from centre-line to each foot (simulation units).",
     "_comment_step_h": "Base foot-lift height (simulation units) during swing phase.",
     "_comment_stride": "Base stride length in simulation units. Scaled by AnimParamFrame.stride_length.",
@@ -59,7 +59,7 @@
     "_comment_sun2_limit": "Maximum fraction of Sun1's sky contribution that Sun2 can add (prevents washed-out sky).",
     "_comment_vol_density": "Global multiplier on sampled dust density in the volumetric pass.",
     "_comment_vol_max_dist": "Maximum ray-march distance for volumetric dust (simulation units).",
-    "_comment_vol_steps": "Volumetric dust ray-march step count. Range: 8–24.",
+    "_comment_vol_steps": "Volumetric dust ray-march step count. Range: 8\u201324.",
     "_comment_whiteout": "Dust level [0-1] above which transmittance collapses toward white (storm whiteout).",
     "haze_density_base": 0.003,
     "haze_height_falloff": 0.001,
@@ -73,8 +73,8 @@
     "whiteout_threshold": 0.7
   },
   "atmosphere": {
-    "_comment_dust": "Baseline dust suspension (0–1). Storms push this higher.",
-    "_comment_haze": "Atmospheric scattering density (0–1). Controls depth-layer separation.",
+    "_comment_dust": "Baseline dust suspension (0\u20131). Storms push this higher.",
+    "_comment_haze": "Atmospheric scattering density (0\u20131). Controls depth-layer separation.",
     "_comment_scatter": "RGB, normalised. Warm dusty atmosphere tint.",
     "dust_base": 0.12,
     "haze_density": 0.55,
@@ -85,9 +85,9 @@
     ]
   },
   "audio": {
-    "_comment": "Stage 19 ProceduralAudioSystem — all synthesis, no external assets.",
+    "_comment": "Stage 19 ProceduralAudioSystem \u2014 all synthesis, no external assets.",
     "_comment_atmo_dust": "Dust-density low-pass strength multiplier (higher = more HF cut in dust storms).",
-    "_comment_bulk_plate": "Gain for MegaResonator (large-slab infrasound 10–80 Hz).",
+    "_comment_bulk_plate": "Gain for MegaResonator (large-slab infrasound 10\u201380 Hz).",
     "_comment_cave_reverb": "Wet/dry mix for the cave delay-network reverb [0..1].",
     "_comment_enable_procedural": "Master switch: use physics-driven procedural foley (true) or legacy bursts (false).",
     "_comment_foot_dust_tail": "Noise tail length (ms) for a dust-surface footstep.",
@@ -104,12 +104,12 @@
     "_comment_limiter_threshold": "Master limiter kick-in level [0..1]. Values above this are compressed.",
     "_comment_master": "Global output amplitude multiplier [0..1].",
     "_comment_max_resonators": "Hard cap on simultaneous ModalResonatorVoice instances.",
-    "_comment_modal_modes": "Maximum number of resonant modes per voice (3–20 range, trades CPU for realism).",
+    "_comment_modal_modes": "Maximum number of resonant modes per voice (3\u201320 range, trades CPU for realism).",
     "_comment_network_impulse": "Internal contact-impulse aggregation rate [Hz]. Sent compressed over net.",
-    "_comment_stage36": "Stage 36 — Generative Foley from Physics (modal synthesis, no wav/ogg assets).",
+    "_comment_stage36": "Stage 36 \u2014 Generative Foley from Physics (modal synthesis, no wav/ogg assets).",
     "_comment_storm_duck": "How strongly the Storm channel ducks Footsteps and Suit [0=no duck, 1=full silence].",
     "_comment_storm_gain": "Storm/whiteout channel output gain.",
-    "_comment_suit_gain": "Suit (breath/fabric/servo) channel output gain. Low by design — suit is subtle.",
+    "_comment_suit_gain": "Suit (breath/fabric/servo) channel output gain. Low by design \u2014 suit is subtle.",
     "_comment_whistle_enable": "Enable narrow-band wind whistle layer in strong winds.",
     "_comment_whistle_strength": "Amplitude multiplier for wind whistle layer [0..1].",
     "_comment_wind_gain": "Wind channel output gain.",
@@ -141,7 +141,7 @@
     "wind_whistle_strength": 0.3
   },
   "audio_world": {
-    "_comment": "Stage 46 — Long-range Acoustic World Model.",
+    "_comment": "Stage 46 \u2014 Long-range Acoustic World Model.",
     "_comment_dust_lp": "Dust-density low-pass strength in the acoustic world model.",
     "_comment_infra_tau": "Infrasound energy decay time-constant in seconds.",
     "_comment_max_emitters": "Hard cap on simultaneous AcousticEmitterRecord instances processed per tick.",
@@ -168,9 +168,9 @@
     "wind_snr_k": 1.5
   },
   "binary": {
-    "_comment": "Real-time minutes for secondary sun to complete one orbit relative to primary. Range: 10–30.",
+    "_comment": "Real-time minutes for secondary sun to complete one orbit relative to primary. Range: 10\u201330.",
     "_comment_color": "Primary is warm (K/G-type ~5000K implied), secondary is hotter/bluer.",
-    "_comment_eccentricity": "Binary orbit eccentricity. 0 = circular. Range: 0–0.2.",
+    "_comment_eccentricity": "Binary orbit eccentricity. 0 = circular. Range: 0\u20130.2.",
     "_comment_mass_ratio": "M2/M1 mass ratio. Determines barycenter split.",
     "eccentricity": 0.0,
     "mass_ratio": 0.35,
@@ -180,7 +180,7 @@
     "secondary_luminosity": 0.35
   },
   "biome": {
-    "_comment": "Stage 28 — BiomeAtlasSystem configuration.",
+    "_comment": "Stage 28 \u2014 BiomeAtlasSystem configuration.",
     "domain_warp_strength": 0.15,
     "enable": true,
     "fracture_band_threshold": 0.55,
@@ -189,7 +189,7 @@
     "meso_scale_km": 8.0
   },
   "boot": {
-    "_comment_spawn_attempts": "Number of candidate spawn points evaluated; more → better spawn, slower boot.",
+    "_comment_spawn_attempts": "Number of candidate spawn points evaluated; more \u2192 better spawn, slower boot.",
     "_comment_spawn_slope": "Spawn candidates with slope above this (degrees) are penalised.",
     "_comment_spawn_stability": "Spawn candidates with geological stability below this are penalised.",
     "_comment_spawn_storm": "Visibility threshold below which a spawning location is penalised.",
@@ -201,7 +201,7 @@
     "warmup_seconds": 10
   },
   "budget": {
-    "_comment": "Stage 42 — BudgetManager per-subsystem limits.",
+    "_comment": "Stage 42 \u2014 BudgetManager per-subsystem limits.",
     "_comment_fallback_enable": "Enable automatic FallbackLadder degradation when over budget.",
     "audio": {
       "_comment_impulses": "Max audio impulses per second.",
@@ -369,7 +369,7 @@
     "_comment_heat_loss": "Cooling rate coefficient (1/s); controls thermal inertia.",
     "_comment_melt": "Temperature (K) above which ice converts back to humidity.",
     "_comment_p_from_t": "Pressure deviation per Kelvin departure from mean temperature.",
-    "_comment_storm": "Pressure differential (normalised 0–1) above which storm onset begins.",
+    "_comment_storm": "Pressure differential (normalised 0\u20131) above which storm onset begins.",
     "_comment_storm_dust": "Minimum dust concentration for storm birth candidate.",
     "_comment_storm_wind": "Minimum wind speed (m/s) for storm birth candidate.",
     "_comment_temp_base": "Baseline equatorial surface temperature in Kelvin.",
@@ -426,7 +426,7 @@
     "wind_from_heat_k": 2.0
   },
   "day": {
-    "_comment": "Real-time minutes per full planet rotation. Range: 60–120.",
+    "_comment": "Real-time minutes per full planet rotation. Range: 60\u2013120.",
     "length_minutes": 90
   },
   "deform": {
@@ -458,7 +458,7 @@
     "yield_snow": 800.0
   },
   "determinism": {
-    "_comment": "Stage 42 — DeterminismContract settings.",
+    "_comment": "Stage 42 \u2014 DeterminismContract settings.",
     "_comment_hash_interval": "Seconds between StateHashSync checks.",
     "_comment_strict": "Raise DeterminismViolation instead of logging (dev/CI only).",
     "hash_interval_sec": 5.0,
@@ -478,7 +478,7 @@
     "_comment_slope_speed_k": "Speed scale reduction per radian of slope angle.",
     "_comment_stability_balance_k": "Balance-loss scale increase when ground_stability is 0.",
     "_comment_variation_strength": "Max fractional micro-variation added to stride/cadence.",
-    "_comment_variation_window": "RNG bucket size (seconds) — micro-variations change at most once per window.",
+    "_comment_variation_window": "RNG bucket size (seconds) \u2014 micro-variations change at most once per window.",
     "_comment_whiteout_stride_scale": "Minimum stride scale at full whiteout visibility.",
     "_comment_whiteout_turn_k": "Multiplier applied to turn_responsiveness at full whiteout.",
     "_comment_wind_lean_max": "Wind speed (m/s) at which upper-body lean reaches maximum.",
@@ -494,22 +494,22 @@
     "wind_lean_max": 20.0
   },
   "evo": {
-    "_comment": "Stage 30 — LongHorizonEvolutionSystem configuration.",
+    "_comment": "Stage 30 \u2014 LongHorizonEvolutionSystem configuration.",
     "_comment_delta": "Sparse delta broadcast interval (seconds).",
     "_comment_dust_dep_k": "Dust deposition rate coefficient per evolution tick.",
     "_comment_dust_lift_k": "Dust lifting rate coefficient per evolution tick.",
     "_comment_enable": "Master on/off switch for the evolution system.",
     "_comment_fatigue_stress": "Fracture fatigue growth rate from geological stress.",
     "_comment_fatigue_temp": "Fracture fatigue growth rate from thermal cycling.",
-    "_comment_grid_h": "Evolution grid height (latitude). Should match or be ≤ climate grid_h.",
-    "_comment_grid_w": "Evolution grid width (longitude). Should match or be ≤ climate grid_w.",
+    "_comment_grid_h": "Evolution grid height (latitude). Should match or be \u2264 climate grid_h.",
+    "_comment_grid_w": "Evolution grid width (longitude). Should match or be \u2264 climate grid_w.",
     "_comment_ice_form_k": "Ice film formation rate coefficient per evolution tick.",
     "_comment_ice_melt_k": "Ice film melt rate coefficient per evolution tick.",
     "_comment_quant": "Bit depth for field quantisation in network messages (8 or 16).",
     "_comment_slope_events": "Cap on slope-collapse events generated per sim-hour.",
     "_comment_slope_relax": "Slope stability loss rate coefficient.",
     "_comment_snap": "Full snapshot broadcast interval (seconds).",
-    "_comment_tick": "Evolution tick interval in game-seconds (30–120 recommended).",
+    "_comment_tick": "Evolution tick interval in game-seconds (30\u2013120 recommended).",
     "_comment_tiles": "Number of tiles updated per evolution tick (budget control).",
     "delta_interval_sec": 20.0,
     "dust_dep_k": 0.03,
@@ -527,7 +527,7 @@
     "snapshot_interval_sec": 120.0,
     "tick_seconds": 60.0,
     "tiles_per_tick": 256,
-    "_comment_stage50": "Stage 50 — Planetary Time-Scale Evolution additional keys.",
+    "_comment_stage50": "Stage 50 \u2014 Planetary Time-Scale Evolution additional keys.",
     "dust_advection_k": 0.05,
     "_comment_dust_advection": "Dust advection strength (how fast wind moves dust between tiles).",
     "dust_erosion_k": 0.03,
@@ -649,7 +649,7 @@
     ]
   },
   "grasp": {
-    "_comment": "Stage 40 — Constraint-Based Multi-Agent Grasping.",
+    "_comment": "Stage 40 \u2014 Constraint-Based Multi-Agent Grasping.",
     "_comment_break_force": "Force magnitude [N] that breaks a grasp constraint.",
     "_comment_com_margin_min": "Minimum COM-to-support-edge clearance before aborting reach.",
     "_comment_damping": "Velocity damping coefficient at the constraint joint.",
@@ -709,7 +709,7 @@
     "yaw_rate_min": 0.4
   },
   "input": {
-    "_comment": "Stage 43 — WASD + mouse input system.",
+    "_comment": "Stage 43 \u2014 WASD + mouse input system.",
     "_comment_mouse_sens": "Degrees of look rotation per raw mouse unit.",
     "_comment_move_frame": "Reference frame for WASD: 'camera' (default) or 'body'.",
     "_comment_pitch_deg": "Maximum pitch angle [deg] for look direction (neck limit).",
@@ -730,13 +730,13 @@
     "update_interval_s": 1.0
   },
   "intent": {
-    "_comment": "Stage 38 — Autonomous Micro-Intent (IntentArbitrator).",
+    "_comment": "Stage 38 \u2014 Autonomous Micro-Intent (IntentArbitrator).",
     "_comment_assist_threshold": "Minimum assistOpportunity score to enter AssistPreparation mode.",
     "_comment_blend_tau_sec": "Exponential blend time constant for mode transitions [s].",
     "_comment_max_speed_scale_under_risk": "Minimum speed multiplier when movementConfidence is at zero.",
     "_comment_max_stance_bias": "Maximum stanceWidthBias value that can be applied under high-risk conditions [0..1].",
     "_comment_mode_hysteresis_margin": "Global offset applied to all mode enter/exit thresholds.",
-    "_comment_tick_hz": "IntentArbitrator update rate [Hz]; 5–15 Hz per spec §10.",
+    "_comment_tick_hz": "IntentArbitrator update rate [Hz]; 5\u201315 Hz per spec \u00a710.",
     "_comment_w_balance": "Weight for balanceRisk component of TotalCost.",
     "_comment_w_proximity": "Weight for crowding/presenceNear component.",
     "_comment_w_slip": "Weight for slipRisk component.",
@@ -759,7 +759,7 @@
     "w_wind": 1.0
   },
   "lighting": {
-    "_comment": "Discrete surface shading bands. 0 = smooth, 1–5 = stepped. Range: 0–5.",
+    "_comment": "Discrete surface shading bands. 0 = smooth, 1\u20135 = stepped. Range: 0\u20135.",
     "_comment_elev": "Primary sun elevation cap for default composition state.",
     "key_color": [
       1.0,
@@ -789,7 +789,7 @@
     "tile_resolution": 17
   },
   "look": {
-    "_comment": "Stage 43 — LookRigController head/torso/body solver.",
+    "_comment": "Stage 43 \u2014 LookRigController head/torso/body solver.",
     "_comment_body_yaw_rate": "Max body rotation speed when standing [deg/s].",
     "_comment_head_yaw": "Max head yaw relative to torso [deg].",
     "_comment_pitch_max": "Max pitch for head look [deg].",
@@ -864,7 +864,7 @@
     }
   },
   "mat": {
-    "_comment": "Stage 28 — ProceduralMaterialSystem v2 tuning.",
+    "_comment": "Stage 28 \u2014 ProceduralMaterialSystem v2 tuning.",
     "micro_normal_strength": 0.15,
     "speckle_strength": 0.04
   },
@@ -891,7 +891,7 @@
     "update_hz": 0.5
   },
   "mega": {
-    "_comment": "Stage 33 — rare mega-events (super-storm, global veil, rift, ring anomaly)",
+    "_comment": "Stage 33 \u2014 rare mega-events (super-storm, global veil, rift, ring anomaly)",
     "aftermath_max_hours": 12.0,
     "aftermath_min_hours": 1.0,
     "cooldown_hours_sim": 6.0,
@@ -965,7 +965,7 @@
     "radius_mul": 0.08
   },
   "net": {
-    "_comment": "Stage 21/22 — multiplayer networking layer.",
+    "_comment": "Stage 21/22 \u2014 multiplayer networking layer.",
     "_comment_appearance_send": "Broadcast SuitKitDescriptor to all clients when a player joins.",
     "_comment_enabled": "Set true to start the WebSocket server on launch.",
     "_comment_interest": "Angular sector (degrees) for one interest sector tile.",
@@ -979,7 +979,7 @@
     "_comment_sector_radius": "Number of neighbouring sector rings included in each client's subscription.",
     "_comment_snap": "Seconds between full CLIMATE_SNAP broadcasts.",
     "_comment_spawn_r": "Scatter radius (m) around the shared spawn anchor.",
-    "_comment_tick_players": "PLAYERS broadcast rate (Hz). Range: 10–20.",
+    "_comment_tick_players": "PLAYERS broadcast rate (Hz). Range: 10\u201320.",
     "_comment_tick_world": "WORLD_TICK broadcast rate (Hz).",
     "_comment_world_tick_hz": "Alias / override for tick_hz_world.",
     "appearance_send_on_join": true,
@@ -999,43 +999,43 @@
     "world_tick_hz": 5,
     "ws_port": 8765,
     "max_clients": 64,
-    "_comment_max_clients": "Stage 57 — maximum concurrent WebSocket connections.",
+    "_comment_max_clients": "Stage 57 \u2014 maximum concurrent WebSocket connections.",
     "spawn_radius_min": 5.0,
-    "_comment_spawn_radius_min": "Stage 57 — minimum spawn scatter radius (metres).",
+    "_comment_spawn_radius_min": "Stage 57 \u2014 minimum spawn scatter radius (metres).",
     "spawn_radius_max": 30.0,
-    "_comment_spawn_radius_max": "Stage 57 — maximum spawn scatter radius (metres).",
+    "_comment_spawn_radius_max": "Stage 57 \u2014 maximum spawn scatter radius (metres).",
     "input_hz": 30,
-    "_comment_input_hz": "Stage 58 — client input packet send rate (Hz). Range: 30–60.",
+    "_comment_input_hz": "Stage 58 \u2014 client input packet send rate (Hz). Range: 30\u201360.",
     "state_hz_self": 20,
-    "_comment_state_hz_self": "Stage 58 — server authoritative-state send rate for own player (Hz).",
+    "_comment_state_hz_self": "Stage 58 \u2014 server authoritative-state send rate for own player (Hz).",
     "state_hz_remote_near": 20,
-    "_comment_state_hz_remote_near": "Stage 58 — server remote-state send rate for nearby players (Hz).",
+    "_comment_state_hz_remote_near": "Stage 58 \u2014 server remote-state send rate for nearby players (Hz).",
     "state_hz_remote_far": 10,
-    "_comment_state_hz_remote_far": "Stage 58 — server remote-state send rate for distant players (Hz).",
+    "_comment_state_hz_remote_far": "Stage 58 \u2014 server remote-state send rate for distant players (Hz).",
     "interp_delay_base_ms": 100,
-    "_comment_interp_delay_base_ms": "Stage 58 — base remote interpolation delay (ms). Grows with jitter.",
+    "_comment_interp_delay_base_ms": "Stage 58 \u2014 base remote interpolation delay (ms). Grows with jitter.",
     "interp_delay_jitter_factor": 1.5,
-    "_comment_interp_delay_jitter_factor": "Stage 58 — jitter multiplier added to interp_delay_base_ms.",
+    "_comment_interp_delay_jitter_factor": "Stage 58 \u2014 jitter multiplier added to interp_delay_base_ms.",
     "reconcile": {
       "k_pos": 0.15,
-      "_comment_k_pos": "Stage 58 — position error-spring gain per tick.",
+      "_comment_k_pos": "Stage 58 \u2014 position error-spring gain per tick.",
       "k_vel": 0.2,
-      "_comment_k_vel": "Stage 58 — velocity error-spring gain per tick.",
+      "_comment_k_vel": "Stage 58 \u2014 velocity error-spring gain per tick.",
       "k_yaw": 0.25,
-      "_comment_k_yaw": "Stage 58 — yaw error-spring gain per tick.",
+      "_comment_k_yaw": "Stage 58 \u2014 yaw error-spring gain per tick.",
       "hard_snap_threshold": 5.0,
-      "_comment_hard_snap_threshold": "Stage 58 — position error (m) above which hard snap is applied."
+      "_comment_hard_snap_threshold": "Stage 58 \u2014 position error (m) above which hard snap is applied."
     },
     "extrapolation_max_ms": 200,
-    "_comment_extrapolation_max_ms": "Stage 58 — maximum remote-player extrapolation window before freeze (ms).",
+    "_comment_extrapolation_max_ms": "Stage 58 \u2014 maximum remote-player extrapolation window before freeze (ms).",
     "lod_distance_thresholds": [
       30.0,
       100.0
     ],
-    "_comment_lod_distance_thresholds": "Stage 58 — [near_m, far_m] distance thresholds for LOD state packing."
+    "_comment_lod_distance_thresholds": "Stage 58 \u2014 [near_m, far_m] distance thresholds for LOD state packing."
   },
   "ops": {
-    "_comment": "Stage 24 — operational layer configuration.",
+    "_comment": "Stage 24 \u2014 operational layer configuration.",
     "baseline_interval_min": 60,
     "baseline_size_trigger_mb": 200,
     "enable_local_ops_http": true,
@@ -1048,7 +1048,7 @@
     "world_state_size_cap_mb": 500
   },
   "overlay": {
-    "_comment": "Stage 28 — transient surface overlay parameters.",
+    "_comment": "Stage 28 \u2014 transient surface overlay parameters.",
     "debris_max": 1.0,
     "dust_deposition_rate": 0.6,
     "dust_erosion_rate_wind": 0.8,
@@ -1057,7 +1057,7 @@
     "ice_temp_threshold": 220.0
   },
   "perception": {
-    "_comment": "Stage 37 — Perception Field (nervous system for MotorStack).",
+    "_comment": "Stage 37 \u2014 Perception Field (nervous system for MotorStack).",
     "_comment_audio_hz": "AudioSalienceField update rate [Hz].",
     "_comment_ground_hz": "GroundStabilityField update rate [Hz].",
     "_comment_presence_hz": "PresenceField update rate [Hz].",
@@ -1108,7 +1108,7 @@
     "wind_hz": 10
   },
   "perf": {
-    "_comment": "Stage 22 — client-side CPU/GPU budget parameters.",
+    "_comment": "Stage 22 \u2014 client-side CPU/GPU budget parameters.",
     "_comment_auto_quality": "When true the client automatically reduces quality (vol steps, update divisor) on low FPS.",
     "_comment_max_chunks_remote": "Maximum chunk re-meshes triggered by remote PATCH_BATCH per frame.",
     "_comment_mesh_budget_ms": "Wall-time budget per frame for chunk meshing (milliseconds).",
@@ -1117,7 +1117,7 @@
     "mesh_budget_ms": 4.0
   },
   "pixel": {
-    "_comment": "Integer only. Frame rendered at 1/N resolution then upscaled. Range: 3–6.",
+    "_comment": "Integer only. Frame rendered at 1/N resolution then upscaled. Range: 3\u20136.",
     "_comment_dither": "0 = no dither, 1 = full Bayer matrix amplitude.",
     "_comment_palette": "Effective colour levels per channel after quantisation. Not a hard 8-bit lock.",
     "dither_strength": 0.6,
@@ -1125,7 +1125,7 @@
     "palette_levels": 32
   },
   "planet": {
-    "_comment_radius": "Simulation units. 1 unit ≈ 1 metre equivalent at character scale.",
+    "_comment_radius": "Simulation units. 1 unit \u2248 1 metre equivalent at character scale.",
     "gravity": 9.2,
     "radius_units": 1000,
     "timescale": 0.0001,
@@ -1134,10 +1134,10 @@
     "_comment_season": "Stage 50: one planetary season in planetTime units."
   },
   "presence": {
-    "_comment": "Stage 25 — diegetic multiplayer presence (no UI, no markers).",
+    "_comment": "Stage 25 \u2014 diegetic multiplayer presence (no UI, no markers).",
     "_comment_audio_remote_cutoff": "LP-filter cutoff (Hz) applied to remote footsteps during storm.",
     "_comment_audio_remote_foot": "Gain for remote player footstep sounds (distance-attenuated on top of this).",
-    "_comment_headlamp_day": "Headlamp output multiplier during daylight. Low — barely noticeable in bright light.",
+    "_comment_headlamp_day": "Headlamp output multiplier during daylight. Low \u2014 barely noticeable in bright light.",
     "_comment_headlamp_night": "Headlamp output multiplier at night. Full beam visible at distance.",
     "_comment_headlamp_scatter": "Whiteout scatter halo radius multiplier. 0=no halo, 1=max diffuse dome.",
     "_comment_net_trail_batch": "Client-side trail event batch window in milliseconds.",
@@ -1161,7 +1161,7 @@
     "trails_ttl_storm_multiplier": 0.25
   },
   "qp": {
-    "_comment": "Stage 47 — Whole-Body QP Controller configuration.",
+    "_comment": "Stage 47 \u2014 Whole-Body QP Controller configuration.",
     "effort_weight": 0.01,
     "enable": true,
     "eps": 1e-06,
@@ -1183,7 +1183,7 @@
   },
   "reflex": {
     "_comment_brace_dur": "Minimum time (seconds) Brace stance is held after activation.",
-    "_comment_brace_gain": "Vibration → brace bias conversion factor.",
+    "_comment_brace_gain": "Vibration \u2192 brace bias conversion factor.",
     "_comment_brace_reach": "Maximum arm reach for brace-contact probe (simulation units).",
     "_comment_brace_slope": "Slope angle (radians, ~26 deg) above which Brace reflex activates.",
     "_comment_decay_tau": "Reflex decay time constant [s].",
@@ -1192,7 +1192,7 @@
     "_comment_grab_hold": "Time (seconds) character can hang from a ledge before releasing.",
     "_comment_grab_speed": "Maximum speed (m/s) at which GrabLedge reflex can trigger.",
     "_comment_gust": "Tangential wind speed (m/s) above which CrouchInGust reflex activates.",
-    "_comment_hysteresis": "Minimum Δ to update reflex r upward (avoids jitter).",
+    "_comment_hysteresis": "Minimum \u0394 to update reflex r upward (avoids jitter).",
     "_comment_ledge_step": "Distance ahead (simulation units) used for ledge probe.",
     "_comment_ledge_thresh": "Minimum height drop (simulation units) to classify as a ledge.",
     "_comment_r_max_critical": "Critical stimulus reflex ceiling (rare).",
@@ -1202,7 +1202,7 @@
     "_comment_slip_max": "Maximum slope angle (radians, ~37 deg) for SlipRecover; steeper = unrecoverable.",
     "_comment_slip_recover": "Per-second fractional velocity reduction during SlipRecover reflex.",
     "_comment_slope_k": "Multiplier converting slope angle (radians) to per-second balance loss.",
-    "_comment_slowdown_gain": "Risk → slowdown bias conversion factor.",
+    "_comment_slowdown_gain": "Risk \u2192 slowdown bias conversion factor.",
     "_comment_stumble_boost": "Velocity boost (m/s) applied per second during StumbleStep reflex.",
     "_comment_wind_k": "Multiplier converting wind speed to per-second balance loss.",
     "balance_loss_shock_k": 0.6,
@@ -1245,11 +1245,11 @@
     "schema_version": 1
   },
   "sched": {
-    "_comment_climate_dt": "Fixed time-step for ClimateSystem (game-seconds per step). Range: 0.5–2.0.",
+    "_comment_climate_dt": "Fixed time-step for ClimateSystem (game-seconds per step). Range: 0.5\u20132.0.",
     "_comment_far_div": "Far-field regions are refreshed every N climate ticks (1 = same as near-field).",
-    "_comment_geo_tick": "Fixed interval between TectonicPlatesSystem stress updates (game-seconds). Range: 2–10.",
-    "_comment_geoevent_tick": "Fixed interval between GeoEventSystem risk ticks (game-seconds). Range: 5–20.",
-    "_comment_insol_hz": "Update rate for InsolationField in Hz (calls per game-second). Range: 2–5.",
+    "_comment_geo_tick": "Fixed interval between TectonicPlatesSystem stress updates (game-seconds). Range: 2\u201310.",
+    "_comment_geoevent_tick": "Fixed interval between GeoEventSystem risk ticks (game-seconds). Range: 5\u201320.",
+    "_comment_insol_hz": "Update rate for InsolationField in Hz (calls per game-second). Range: 2\u20135.",
     "_comment_job_max": "Maximum number of queued jobs processed per frame.",
     "_comment_job_ms": "Wall-time budget per frame for the BudgetedJobQueue (milliseconds).",
     "_comment_keyframe": "Server sends ASTRO_KEYFRAME to clients every N game-seconds.",
@@ -1287,7 +1287,7 @@
     "default": 42
   },
   "sim": {
-    "_comment": "Stage 42 — simulation tick rates.",
+    "_comment": "Stage 42 \u2014 simulation tick rates.",
     "_comment_tick_hz": "Primary simulation tick rate [Hz] (physics, motor, IK).",
     "tick_hz": 60
   },
@@ -1296,7 +1296,7 @@
     "_comment_enable": "Master switch for SkyPhenomenaSystem (Stage 31).",
     "_comment_halo_k": "Peak intensity multiplier for the halo effect.",
     "_comment_halo_sigma": "Gaussian half-width of the halo ring (degrees).",
-    "_comment_halo_theta": "Peak angle of the 22° ice-crystal halo (degrees).",
+    "_comment_halo_theta": "Peak angle of the 22\u00b0 ice-crystal halo (degrees).",
     "_comment_parhelia_enable": "Enable parhelion (sun dog) rendering.",
     "_comment_parhelia_rarity": "Fraction of time-buckets where parhelia appear [0-1].",
     "_comment_parhelia_tb": "Duration (seconds) of each parhelia on/off decision bucket.",
@@ -1318,7 +1318,7 @@
     "temporal_tau_sec": 2.0
   },
   "social": {
-    "_comment": "Stage 39 — Emergent Social Coupling (SocialCoupler).",
+    "_comment": "Stage 39 \u2014 Emergent Social Coupling (SocialCoupler).",
     "_comment_alignment_strength_max": "Cap on velocity-alignment strength in GroupCohesion [0..1].",
     "_comment_assist_prep_threshold": "Minimum assistOpportunity score to enter AssistPrep mode.",
     "_comment_collision_min_dist": "Minimum safe separation distance [m] for CollisionYield.",
@@ -1327,8 +1327,8 @@
     "_comment_personal_space_max": "Maximum preferred inter-player distance [m].",
     "_comment_personal_space_min": "Minimum preferred inter-player distance [m].",
     "_comment_presence_radius": "Radius [m] within which other players are socially perceived.",
-    "_comment_tick_hz": "SocialCoupler update rate [Hz]; 2–10 Hz per spec §13.",
-    "_comment_yield_horizon": "Look-ahead time [s] for collision trajectory prediction (§9).",
+    "_comment_tick_hz": "SocialCoupler update rate [Hz]; 2\u201310 Hz per spec \u00a713.",
+    "_comment_yield_horizon": "Look-ahead time [s] for collision trajectory prediction (\u00a79).",
     "alignment_strength_max": 0.8,
     "assist_prep_threshold": 0.4,
     "collision_min_dist_m": 1.0,
@@ -1341,7 +1341,7 @@
     "yield_prediction_horizon_sec": 1.5
   },
   "subhaz": {
-    "_comment": "Stage 27 — subsurface hazards: cave collapses, sags, dust waves.",
+    "_comment": "Stage 27 \u2014 subsurface hazards: cave collapses, sags, dust waves.",
     "_comment_chain_decay": "Per-hop probability decay for chain collapses (0..1).",
     "_comment_chain_max_depth": "Maximum chain-collapse propagation depth (hops through cave graph).",
     "_comment_cooldown_same_cave_sec": "Minimum seconds between hazard events in the same cave zone.",
@@ -1374,20 +1374,20 @@
     "tick_seconds": 10.0
   },
   "subsurface": {
-    "_comment": "Stage 26 — subsurface world: caves, lava tubes, chambers, collapses.",
+    "_comment": "Stage 26 \u2014 subsurface world: caves, lava tubes, chambers, collapses.",
     "_comment_cave_audio_reverb_mix": "Reverb wet mix for cave acoustics (0=dry, 1=full reverb).",
     "_comment_cave_fog_density": "Fog density multiplier deep underground (0=none, 1=full).",
     "_comment_cave_light_scatter": "Headlamp volumetric scatter in caves (0=off, 1=max diffuse).",
     "_comment_chamber_size_max": "Maximum chamber half-diameter (metres).",
     "_comment_chamber_size_min": "Minimum chamber half-diameter (metres).",
     "_comment_collapse_event_rate_cap": "Maximum server-authoritative collapse events per in-game hour.",
-    "_comment_deep_prob": "Probability of generating a node in the deep layer (1–5 km).",
+    "_comment_deep_prob": "Probability of generating a node in the deep layer (1\u20135 km).",
     "_comment_enable": "Master toggle for the subsurface system.",
     "_comment_fracture_thickness": "Half-thickness of tectonic fracture caverns (metres).",
-    "_comment_mid_prob": "Probability of generating a node in the mid layer (200–1000 m).",
+    "_comment_mid_prob": "Probability of generating a node in the mid layer (200\u20131000 m).",
     "_comment_portal_frequency": "Probability that a shallow cave node has a surface entry portal.",
     "_comment_seed_salt": "XOR salt applied to the global seed before cave generation.",
-    "_comment_shallow_prob": "Probability of generating a node in the shallow layer (0–200 m).",
+    "_comment_shallow_prob": "Probability of generating a node in the shallow layer (0\u2013200 m).",
     "_comment_tube_radius_max": "Maximum lava tube / tunnel radius (metres).",
     "_comment_tube_radius_min": "Minimum lava tube / tunnel radius (metres).",
     "cave_audio_reverb_mix": 0.7,
@@ -1407,10 +1407,10 @@
     "tube_radius_min": 4.0
   },
   "suit": {
-    "_comment": "Stage 43 — SuitKit procedural character assembly.",
+    "_comment": "Stage 43 \u2014 SuitKit procedural character assembly.",
     "_comment_com_shift": "Max normalised COM shift from backpack [0..1].",
-    "_comment_inertia_var": "Inertia scale variation ±fraction.",
-    "_comment_mass_var": "Suit extra mass variation ±fraction (e.g. 0.06 = ±6%).",
+    "_comment_inertia_var": "Inertia scale variation \u00b1fraction.",
+    "_comment_mass_var": "Suit extra mass variation \u00b1fraction (e.g. 0.06 = \u00b16%).",
     "_comment_palette": "Default palette index (0 = dark base + orange accent).",
     "com_shift_max": 0.03,
     "inertia_var": 0.05,
@@ -1433,9 +1433,9 @@
     "_comment_boundary": "Angular distance (radians) within which a point is considered a boundary zone.",
     "_comment_canyon": "Depth multiplier for transform canyons.",
     "_comment_dev": "Dev mode: enable plate/boundary/stress colour overlay (dev only).",
-    "_comment_field": "Equirectangular field resolution (width × height). Coarse is intentional.",
+    "_comment_field": "Equirectangular field resolution (width \u00d7 height). Coarse is intentional.",
     "_comment_fracture_rate": "Rate at which fracture accumulates from stress per second.",
-    "_comment_plate_count": "Number of tectonic plates. Range: 12–30.",
+    "_comment_plate_count": "Number of tectonic plates. Range: 12\u201330.",
     "_comment_ridge": "Height multiplier for convergent ridges (fraction of HEIGHT_SCALE).",
     "_comment_rift_amp": "Depth multiplier for divergent rift valleys.",
     "_comment_stress_rate": "Rate at which stress accumulates per second in boundary zones.",
@@ -1451,7 +1451,7 @@
     "stress_rate": 0.01
   },
   "telemetry": {
-    "_comment": "Stage 42 — RuntimeTelemetry settings (dev-only).",
+    "_comment": "Stage 42 \u2014 RuntimeTelemetry settings (dev-only).",
     "_comment_enable": "Enable dev-only telemetry (disable in production).",
     "_comment_ringbuffer": "Ring-buffer log duration in seconds.",
     "enable_dev": true,
@@ -1464,7 +1464,7 @@
     "scale": 1.0
   },
   "web": {
-    "_comment": "Stage 23 — browser deploy / WASM build settings.",
+    "_comment": "Stage 23 \u2014 browser deploy / WASM build settings.",
     "_comment_build_id": "Content hash injected by build_web.sh; empty means auto-computed at runtime.",
     "_comment_ping": "Server-side WebSocket ping interval in seconds (0 = disabled).",
     "_comment_range": "Serve Accept-Ranges: bytes for binary asset files.",
@@ -1485,9 +1485,9 @@
     "ws_path": "/ws"
   },
   "memory": {
-    "_comment": "Stage 51 — Emergent Memory of the World.",
+    "_comment": "Stage 51 \u2014 Emergent Memory of the World.",
     "_comment_enable": "Enable the world memory system.",
-    "_comment_tick_hz": "Memory system update frequency (Hz). 0.1–1 Hz recommended.",
+    "_comment_tick_hz": "Memory system update frequency (Hz). 0.1\u20131 Hz recommended.",
     "_comment_k_stress": "Stress gain per unit contact force per second.",
     "_comment_k_stress_relax": "Passive stress relaxation rate per second.",
     "_comment_k_compact_gain": "Compaction history gain per unit force per second.",
@@ -1517,7 +1517,7 @@
     "reset_on_corrupt": true
   },
   "observer": {
-    "_comment": "Stage 53 Observer Influence Without Agency — player as physical body in existing fields.",
+    "_comment": "Stage 53 Observer Influence Without Agency \u2014 player as physical body in existing fields.",
     "enable": true,
     "k_player_stress": 0.02,
     "k_thermal_melt": 0.005,
@@ -1586,12 +1586,12 @@
     "total_ticks": 1800
   },
   "protocol": {
-    "_comment": "Stage 57 — WebSocket protocol versioning.",
+    "_comment": "Stage 57 \u2014 WebSocket protocol versioning.",
     "version": 1,
     "_comment_version": "Current protocol revision. Increment on breaking schema changes."
   },
   "snapshot": {
-    "_comment": "Stage 57 — World snapshot format versioning.",
+    "_comment": "Stage 57 \u2014 World snapshot format versioning.",
     "format_version": 1,
     "_comment_format_version": "Increment when persisted world-state format changes.",
     "enable": true,
@@ -1603,16 +1603,16 @@
     "validate_on_boot": true
   },
   "watchdog": {
-    "_comment": "Stage 59 — Crash watchdog timer.",
+    "_comment": "Stage 59 \u2014 Crash watchdog timer.",
     "tick_timeout_ms": 5000
   },
   "rollback": {
-    "_comment": "Stage 59 — World rollback policy.",
+    "_comment": "Stage 59 \u2014 World rollback policy.",
     "enable": true,
     "max_depth": 3
   },
   "scale": {
-    "_comment": "Stage 60 — Production Scaling & Sharding configuration.",
+    "_comment": "Stage 60 \u2014 Production Scaling & Sharding configuration.",
     "enable_shards": false,
     "_comment_enable_shards": "Set true to activate multi-region shard mode.",
     "region_size_deg": 10.0,
@@ -1641,13 +1641,13 @@
     "_comment_failover_enable": "Enable Global Authority standby failover."
   },
   "obs": {
-    "_comment": "Stage 61 — Observability configuration.",
+    "_comment": "Stage 61 \u2014 Observability configuration.",
     "enable": true,
     "metrics_export": "prometheus",
     "trace_sampling": 0.1
   },
   "tuning": {
-    "_comment": "Stage 61 — Live tuning configuration.",
+    "_comment": "Stage 61 \u2014 Live tuning configuration.",
     "allowlist": [
       "max_raycasts_per_sec",
       "qp_max_iters",
@@ -1664,7 +1664,7 @@
     "max_delta_per_epoch": 10
   },
   "autobudget": {
-    "_comment": "Stage 61 — Automatic LOD/budget controller.",
+    "_comment": "Stage 61 \u2014 Automatic LOD/budget controller.",
     "enable": true,
     "thresholds": {
       "tick_ms_p99": 16.0,
@@ -1673,7 +1673,7 @@
     }
   },
   "render": {
-    "_comment": "Stage 62 — Visual Identity Polishing. These locked keys are never auto-tuned; change only via controlled tuningEpoch.",
+    "_comment": "Stage 62 \u2014 Visual Identity Polishing. These locked keys are never auto-tuned; change only via controlled tuningEpoch.",
     "internal_resolution": [
       1920,
       1080
@@ -1712,5 +1712,14 @@
     "sway_frequency_hz": 0.25,
     "fov_salience_max_deg": 2.5,
     "cinematic_shake_enabled": false
+  },
+  "material63": {
+    "materialGraphVersion": 1,
+    "erosionRate": 0.012,
+    "depositionRate": 0.015,
+    "compactionRate": 0.018,
+    "meltRate": 0.02,
+    "fractureThreshold": 0.7,
+    "magmaCoolingRate": 0.008
   }
 }
