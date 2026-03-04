@@ -165,12 +165,6 @@ class TestGlobalMassStability(unittest.TestCase):
             mass_final, max_possible,
             "Total grid mass must not exceed physical maximum",
         )
-        # Should not have grown without physical bound
-        # (storm deposits, but fields are clamped to 1.0)
-        self.assertLessEqual(
-            mass_final, max_possible,
-            "Mass stayed within physical bounds",
-        )
 
     def test_no_runaway_from_repeated_deposition(self) -> None:
         """Repeated deposition does not push fields past 1.0."""
@@ -439,7 +433,7 @@ class TestMaterialGraphVersionLock(unittest.TestCase):
 
     def test_tick_order_fixed_sequence(self) -> None:
         """TickOrder constants are in the correct order 1–7."""
-        self.assertEqual(TickOrder.ATMOSPHERE,          1)
+        self.assertEqual(TickOrder.ATMOSPHERE,           1)
         self.assertEqual(TickOrder.MICROCLIMATE,         2)
         self.assertEqual(TickOrder.PHASE_TRANSITIONS,    3)
         self.assertEqual(TickOrder.CHARACTER_TO_WORLD,   4)

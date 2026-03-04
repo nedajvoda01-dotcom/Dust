@@ -111,7 +111,8 @@ PHASE_TRANSITIONS: frozenset = frozenset([
     (MaterialNode.VAPOR,             MaterialNode.SNOW_LOOSE),
 
     # 4.4 Fracture / Instability (slope flow)
-    (MaterialNode.DEBRIS_FRAGMENTS,  MaterialNode.REGOLITH_DUST),
+    # (Crust → DebrisFragments and DebrisFragments → RegolithDust already
+    # declared in sections 4.1/4.2 above; no additional edges needed)
 
     # 4.5 Magma transitions
     (MaterialNode.MAGMA,             MaterialNode.CRUST),

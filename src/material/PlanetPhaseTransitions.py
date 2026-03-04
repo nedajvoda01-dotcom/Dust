@@ -107,6 +107,15 @@ class PlanetPhaseTransitions:
 
     _ALLOWLIST = frozenset(_DEFAULTS.keys())
 
+    # Insolation/temperature thresholds for melt/freeze transitions
+    _MELT_TEMP_THRESHOLD   = 0.6   # temperatureProxy above which melt begins
+    _MELT_INSOL_THRESHOLD  = 0.7   # insolation above which melt begins
+    _MELT_ONSET_TEMP       = 0.5   # lower bound for melt rate calculation
+    _MELT_ONSET_INSOL      = 0.5
+    _ICE_MELT_INSOL_ONSET  = 0.4   # insolation onset for ice-film sublimation
+    _COND_TEMP_THRESHOLD   = 0.3   # below this temperature, condensation forms
+    _COND_INSOL_THRESHOLD  = 0.3   # below this insolation, condensation forms
+
     def __init__(self, config: Optional[dict] = None) -> None:
         cfg_src = {}
         if config is not None:
@@ -231,21 +240,24 @@ class PlanetPhaseTransitions:
         # ------------------------------------------------------------------
 
         # SnowLoose → WaterRare (melt under high temperature / insolation)
-        if c.temperature > 0.6 or c.insolation > 0.7:
-            melt_driver = max(0.0, c.temperature - 0.5) + max(0.0, c.insolation - 0.5)
+        if c.temperature > self._MELT_TEMP_THRESHOLD or c.insolation > self._MELT_INSOL_THRESHOLD:
+            melt_driver = (
+                max(0.0, c.temperature - self._MELT_ONSET_TEMP)
+                + max(0.0, c.insolation - self._MELT_ONSET_INSOL)
+            )
             melt = self.meltRate * melt_driver * dt
             api.transfer_mass("snowMass", "iceFilmThickness", melt)
 
         # IceFilm → WaterRare (sublimation / melt — represented as
         # iceFilmThickness decrease; mass enters moistureProxy)
-        if c.insolation > 0.5 or c.temperature > 0.5:
-            ice_melt = self.meltRate * 0.8 * max(0.0, c.insolation - 0.4) * dt
+        if c.insolation > self._MELT_ONSET_INSOL or c.temperature > self._MELT_ONSET_TEMP:
+            ice_melt = self.meltRate * 0.8 * max(0.0, c.insolation - self._ICE_MELT_INSOL_ONSET) * dt
             removed = api.apply_mass_delta("iceFilmThickness", -ice_melt)
             api.apply_mass_delta("moistureProxy", -removed)  # proxy update
 
         # Vapor → IceFilm / SnowLoose (condensation at low temperature)
-        if c.temperature < 0.3 and c.insolation < 0.3:
-            cond = self.meltRate * 0.6 * (0.3 - c.temperature) * dt
+        if c.temperature < self._COND_TEMP_THRESHOLD and c.insolation < self._COND_INSOL_THRESHOLD:
+            cond = self.meltRate * 0.6 * (self._COND_TEMP_THRESHOLD - c.temperature) * dt
             # Preferentially forms ice film, then snow
             added = api.apply_mass_delta("iceFilmThickness", cond)
             if added < cond * 0.5:
