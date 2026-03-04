@@ -1635,5 +1635,37 @@
     "_comment_grace_period_sec": "Seconds RS keeps ticking after GA goes silent before halting.",
     "failover_enable": true,
     "_comment_failover_enable": "Enable Global Authority standby failover."
+  },
+  "obs": {
+    "_comment": "Stage 61 — Observability configuration.",
+    "enable": true,
+    "metrics_export": "prometheus",
+    "trace_sampling": 0.1
+  },
+  "tuning": {
+    "_comment": "Stage 61 — Live tuning configuration.",
+    "allowlist": [
+      "max_raycasts_per_sec",
+      "qp_max_iters",
+      "net_update_hz",
+      "chunk_update_interval",
+      "instability_threshold",
+      "instability_decay_rate",
+      "dust_decay_rate",
+      "ice_decay_rate",
+      "max_camera_mod",
+      "smoothing_tau"
+    ],
+    "apply_tick_boundary": 64,
+    "max_delta_per_epoch": 10
+  },
+  "autobudget": {
+    "_comment": "Stage 61 — Automatic LOD/budget controller.",
+    "enable": true,
+    "thresholds": {
+      "tick_ms_p99": 16.0,
+      "net_out_bps": 10000000,
+      "health_score": 0.7
+    }
   }
 }
